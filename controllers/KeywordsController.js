@@ -14,7 +14,8 @@ function make_request(keyword, callback){
       'Content-Type': 'application/json'
     })
     .send(JSON.stringify({
-      "q": `${keyword}`
+      "q": `${keyword}`,
+      "gl": "ke"
     }))
     .end((response) => { 
       if (response.error) throw new Error(response.error); 
