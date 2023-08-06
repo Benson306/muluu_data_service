@@ -4,7 +4,14 @@ let app = express();
 
 require('dotenv').config();
 
-app.use(express.json())
+app.use(express.json());
+
+let mongoose = require('mongoose');
+
+//Connect to mongoDb using mongoose library
+let mongoURI = process.env.MONGO_URI;
+
+mongoose.connect(mongoURI);
 
 let keywordsController = require('./controllers/KeywordsController');
 app.use('/', keywordsController);
