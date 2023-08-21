@@ -16,6 +16,9 @@ mongoose.connect(mongoURI);
 let keywordsController = require('./controllers/KeywordsController');
 app.use('/', keywordsController);
 
+let longtailController = require('./controllers/LongtailContoller');
+app.use('/', longtailController);
+
 let port = 3000;
 
 app.listen(port, ()=>{
