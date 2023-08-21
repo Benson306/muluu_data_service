@@ -29,7 +29,7 @@ node app.js
 
 # The app runs on port 3000.
 
-# Send a GET request to /keywords/{enter a keyword}
+# Send a GET request to /keyword/{enter a keyword}
 
 # Keyword Search Results will be displayed in json.
 ```
