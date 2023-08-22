@@ -49,7 +49,7 @@ app.get('/longtail/:keyword', (req, res)=>{
         //scrapeKeywords(targetUrl, req.params.keyword);
 
         // Define the URL to scrape
-        const url = 'https://www.tutorialspoint.com';
+        const url = 'https://moz.com/help';
 
         let searchTerm = req.params.keyword;
         
@@ -65,14 +65,12 @@ app.get('/longtail/:keyword', (req, res)=>{
 
             const textContent = $('p').text();
 
-            console.log(textContent);
-
             // Tokenize the target keyword
             let tokenizer = new natural.WordTokenizer();
-            const tokens = tokenizer.tokenize(textContent);
+            const filteredTokens = tokenizer.tokenize(textContent);
             
             //Remove stopwords
-            const filteredTokens = tokens.filter(token => !stopwords.includes(token.toLowerCase()));
+            //const filteredTokens = tokens.filter(token => !stopwords.includes(token.toLowerCase()));
 
             // Add documents (text) to the TF-IDF instance
             tfidf.addDocument(filteredTokens);
