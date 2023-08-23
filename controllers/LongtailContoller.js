@@ -118,5 +118,3 @@ app.get('/longtail/:keyword', (req, res)=>{
 })
 
 module.exports = app;
-
-

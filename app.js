@@ -19,6 +19,9 @@ app.use('/', keywordsController);
 let longtailController = require('./controllers/LongtailContoller');
 app.use('/', longtailController);
 
+let scrapingController = require('./controllers/ScrapingController');
+app.use('/', scrapingController);
+
 let port = 3000;
 
 app.listen(port, ()=>{
