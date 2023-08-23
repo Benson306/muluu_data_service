@@ -34,7 +34,7 @@ app.post('/scrape', urlEncoded ,(req, res)=>{
   //Make request and receive date as a callback
   make_request(req.body.url,(data)=>{
 
-    res.json(data);
+    res.send(data);
 
   });
 
