@@ -13,8 +13,6 @@ app.get('/longtail', (req, res)=>{
         // Define the URL to scrape
         const url = 'https://moz.com/help';
 
-        let searchTerm = req.params.keyword;
-        
         // Initialize TF-IDF instance
         const tfidf = new TfIdf();
 
@@ -29,6 +27,9 @@ app.get('/longtail', (req, res)=>{
 
             // Tokenize the target keyword
             let tokenizer = new natural.WordTokenizer();
+
+            const tokens = tokenizer.tokenize(textContent);
+
             const filteredTokens = tokenizer.tokenize(textContent);
             
             //Remove stopwords
@@ -40,7 +41,7 @@ app.get('/longtail', (req, res)=>{
             // Calculate TF-IDF for the target keyword
             const keywords = [];
             
-            const MIN_KEYWORD_LENGTH = 4;
+            const MIN_KEYWORD_LENGTH = 3;
             let currentKeyword = '';
 
             for (const word of filteredTokens) {
@@ -59,19 +60,31 @@ app.get('/longtail', (req, res)=>{
             //Extract keywords with a minimum length of three words 
             const sensibleKeywords = [];
             
-            keywords.map(phrase => {
+            keywords.forEach(phrase => {
               const words = phrase.split(' ');
-                if(words.length > 3){
+                if(words.length > 3 && words.length < 12){
+
+                  // let totalTfIdfScore = 0;
+
+                  // words.forEach(token => {
+                  //   let score = tfidf.tfidfs(token, (i, measure) => measure);
+                  //   totalTfIdfScore += Number(score[0].toFixed(3));
+                  // });
+
+                  // sensibleKeywords.push({ phrase, tfidfScore: totalTfIdfScore });
+            
                   sensibleKeywords.push(phrase);
                 }
             })
+
+            // Sort keywords based on TF-IDF scores
+            //sensibleKeywords.sort((a, b) => b.tfidfScore - a.tfidfScore);
 
             res.json(sensibleKeywords);
         })
         .catch(error => {
             console.error('Error scraping data:', error);
         });
-
 
 })
 
