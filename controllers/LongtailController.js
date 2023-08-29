@@ -11,13 +11,16 @@ let app =  express.Router();
 
 const bodyParser = require('body-parser');
 
+let cron = require('node-cron');
+const PagesModel = require('../models/PagesModel');
+const IdsModel = require('../models/IdsModel');
+
 const urlEncoded = bodyParser.urlencoded({extended: false});
 
 //Scheduled longtail scrapper
-function getLongtailFromScrappedDataInDb(data){
+function getLongtailFromScrappedDataInDb(scrapedData){
       // Initialize TF-IDF instance
       const tfidf = new TfIdf();
-      const scrapedData = data;
 
       const $ = cheerio.load(scrapedData);
 
@@ -76,14 +79,14 @@ function getLongtailFromScrappedDataInDb(data){
       })
 
       // Sort keywords based on TF-IDF scores
-      sensibleKeywords.sort((a, b) => b.tfidfScore - a.tfidfScore);
-
+      sensibleKeywords.sort((a, b) => b.score - a.score);
+      
       //Save to DB
       sensibleKeywords.forEach((keyword)=>{
         if(keyword.score > 4){
           LongtailModel(keyword).save()
           .then(()=>{
-            console.log('success');
+            console.log('Longtail Data Saved');
           })
           .catch(()=>{
             console.log("Error in saving longtail keyword");
@@ -91,6 +94,40 @@ function getLongtailFromScrappedDataInDb(data){
         }
       })
 }
+
+function run_longtail_scrapper(){
+  PagesModel.find({})
+  .then((data)=>{   
+    data.forEach(dt =>{
+      //Check if id exists in page_ids collection
+      IdsModel.find({page_id: dt._id})
+      .then((idsData)=>{
+
+        if(idsData.length == 0){
+          
+          getLongtailFromScrappedDataInDb(dt.page_html);
+
+          IdsModel({page_id: dt._id}).save()
+          .then(()=>{
+            console.log("Page Id saved");
+          })
+          .catch(()=>{
+            console.log("Error In Saving page Id");
+          })
+        }
+      })
+
+      
+    })
+  })
+}
+
+//Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
+let scheduled = cron.schedule('0 * * * *', () => {
+  run_longtail_scrapper();
+});
+
+scheduled.start();
 
 app.get('/longtail/:keyword',async (req, res)=>{
   try{

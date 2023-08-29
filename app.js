@@ -9,7 +9,7 @@ app.use(express.json());
 let mongoose = require('mongoose');
 
 //Connect to mongoDb using mongoose library
-let mongoURI = process.env.MONGO_URI;
+let mongoURI = process.env.DEV_MONGO_URI;
 
 mongoose.connect(mongoURI);
 
