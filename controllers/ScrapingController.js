@@ -5,6 +5,7 @@ let app =  express.Router();
 const unirest = require('unirest');
 
 const bodyParser = require('body-parser');
+const PagesModel = require('../models/PagesModel');
 
 const urlEncoded = bodyParser.urlencoded({extended: false});
 
@@ -34,7 +35,28 @@ app.post('/scrape', urlEncoded ,(req, res)=>{
   //Make request and receive date as a callback
   make_request(req.body.url,(data)=>{
 
-    res.send(data);
+    const domainName = new URL(req.body.url);
+    const jsonData = JSON.parse(data);
+
+    let savedData = {
+      page_link: req.body.url,
+      domain: domainName.hostname,
+      page_html: jsonData.result
+    }
+
+    PagesModel.find({page_link: req.body.url})
+    .then(data => {
+      if(data.length > 0){
+        res.json('found');
+      }else{
+        PagesModel(savedData).save()
+        .then(()=>{
+          res.json(savedData);
+        })
+      }
+    })
+  
+    //res.send(savedData);
 
   });
 
