@@ -3,89 +3,109 @@ const natural = require('natural');
 const { TfIdf } = natural;
 let express =  require('express');
 const cheerio = require('cheerio');
+const LongtailModel = require('../models/LongtailModel');
 
 const stopwords = require('natural').stopwords;
 
 let app =  express.Router();
-  
 
-app.get('/longtail', (req, res)=>{
-        // Define the URL to scrape
-        const url = 'https://moz.com/help';
+const bodyParser = require('body-parser');
 
-        // Initialize TF-IDF instance
-        const tfidf = new TfIdf();
+const urlEncoded = bodyParser.urlencoded({extended: false});
 
-        // Fetch the data using axios
-        axios.get(url)
-        .then(response => {
-            const scrapedData = response.data;
+//Scheduled longtail scrapper
+function getLongtailFromScrappedDataInDb(data){
+      // Initialize TF-IDF instance
+      const tfidf = new TfIdf();
+      const scrapedData = data;
 
-            const $ = cheerio.load(scrapedData);
+      const $ = cheerio.load(scrapedData);
 
-            const textContent = $('p').text();
+      const textContent = $('p').text();
 
-            // Tokenize the target keyword
-            let tokenizer = new natural.WordTokenizer();
+      // Tokenize the target keyword
+      let tokenizer = new natural.WordTokenizer();
 
-            const tokens = tokenizer.tokenize(textContent);
+      //const tokens = tokenizer.tokenize(textContent);
 
-            const filteredTokens = tokenizer.tokenize(textContent);
-            
-            //Remove stopwords
-            //const filteredTokens = tokens.filter(token => !stopwords.includes(token.toLowerCase()));
+      const filteredTokens = tokenizer.tokenize(textContent);
 
-            // Add documents (text) to the TF-IDF instance
-            tfidf.addDocument(filteredTokens);
+      //Remove stopwords
+      //const filteredTokens = tokens.filter(token => !stopwords.includes(token.toLowerCase()));
 
-            // Calculate TF-IDF for the target keyword
-            const keywords = [];
-            
-            const MIN_KEYWORD_LENGTH = 3;
-            let currentKeyword = '';
+      // Add documents (text) to the TF-IDF instance
+      tfidf.addDocument(filteredTokens);
 
-            for (const word of filteredTokens) {
-                if (word.length >= MIN_KEYWORD_LENGTH) {
-                  if (currentKeyword === '') {
-                    currentKeyword = word;
-                  } else {
-                    currentKeyword += ' ' + word;
-                  }
-                } else if (currentKeyword !== '') {
-                  keywords.push(currentKeyword);
-                  currentKeyword = '';
-                }
-              }
-            
-            //Extract keywords with a minimum length of three words 
-            const sensibleKeywords = [];
-            
-            keywords.forEach(phrase => {
-              const words = phrase.split(' ');
-                if(words.length > 3 && words.length < 12){
+      // Calculate TF-IDF for the target keyword
+      const keywords = [];
 
-                  let totalTfIdfScore = 0;
+      const MIN_KEYWORD_LENGTH = 3;
+      let currentKeyword = '';
 
-                  words.forEach(token => {
-                    let score = tfidf.tfidfs(token, (i, measure) => measure);
-                    totalTfIdfScore += Number(score[0].toFixed(3));
-                  });
+      for (const word of filteredTokens) {
+          if (word.length >= MIN_KEYWORD_LENGTH) {
+            if (currentKeyword === '') {
+              currentKeyword = word;
+            } else {
+              currentKeyword += ' ' + word;
+            }
+          } else if (currentKeyword !== '') {
+            keywords.push(currentKeyword);
+            currentKeyword = '';
+          }
+        }
 
-                  sensibleKeywords.push({ phrase, tfidfScore: Number(totalTfIdfScore.toFixed(3)) });
-            
-                  //sensibleKeywords.push(phrase);
-                }
-            })
+      //Extract keywords with a minimum length of three words 
+      const sensibleKeywords = [];
 
-            // Sort keywords based on TF-IDF scores
-            sensibleKeywords.sort((a, b) => b.tfidfScore - a.tfidfScore);
+      keywords.forEach(phrase => {
+        const words = phrase.split(' ');
+          if(words.length > 3 && words.length < 12){
 
-            res.json(sensibleKeywords);
-        })
-        .catch(error => {
-            console.error('Error scraping data:', error);
-        });
+            let totalTfIdfScore = 0;
 
+            words.forEach(token => {
+              let score = tfidf.tfidfs(token, (i, measure) => measure);
+              totalTfIdfScore += Number(score[0].toFixed(3));
+            });
+
+            sensibleKeywords.push({ longtail_keyword: phrase, score: Number(totalTfIdfScore.toFixed(3)) });
+
+            //sensibleKeywords.push(phrase);
+          }
+      })
+
+      // Sort keywords based on TF-IDF scores
+      sensibleKeywords.sort((a, b) => b.tfidfScore - a.tfidfScore);
+
+      //Save to DB
+      sensibleKeywords.forEach((keyword)=>{
+        if(keyword.score > 4){
+          LongtailModel(keyword).save()
+          .then(()=>{
+            console.log('success');
+          })
+          .catch(()=>{
+            console.log("Error in saving longtail keyword");
+          })
+        }
+      })
+}
+
+app.get('/longtail/:keyword',async (req, res)=>{
+  try{
+    const results = await LongtailModel.find({ longtail_keyword: { $regex : req.params.keyword, $options: 'i'}})
+    .sort({ score: -1 })
+    .limit(5)
+    .toArray()
+
+    res.json(results);
+  } 
+  catch(error){
+    console.log("Error retrieving data");
+    res.status(500).send('Internal Server Error');
+  }
+     
 })
 
 module.exports = app;
