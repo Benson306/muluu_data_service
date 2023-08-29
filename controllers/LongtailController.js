@@ -102,7 +102,7 @@ app.get('/longtail/:keyword',async (req, res)=>{
     res.json(results);
   } 
   catch(error){
-    console.log("Error retrieving data");
+    console.log("Error retrieving data" + error);
     res.status(500).send('Internal Server Error');
   }
      
