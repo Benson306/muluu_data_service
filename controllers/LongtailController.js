@@ -84,13 +84,26 @@ function getLongtailFromScrappedDataInDb(scrapedData){
       //Save to DB
       sensibleKeywords.forEach((keyword)=>{
         if(keyword.score > 4){
-          LongtailModel(keyword).save()
-          .then(()=>{
-            console.log('Longtail Data Saved');
+          //Check for duplicates
+          LongtailModel.find({ longtail_keyword: { $regex : keyword.longtail_keyword, $options: 'i'}})
+          .then((data)=>{
+          
+            if(data.length == 0){
+              console.log('data found')
+              //Save if there are no duplicates
+                LongtailModel(keyword).save()
+                .then(()=>{
+                  console.log('Longtail Data Saved');
+                })
+                .catch(()=>{
+                  console.log("Error in saving longtail keyword");
+                })
+            }else{
+              console.log('keyword not found')
+            }
+            
           })
-          .catch(()=>{
-            console.log("Error in saving longtail keyword");
-          })
+
         }
       })
 }
@@ -104,7 +117,6 @@ function run_longtail_scrapper(){
       .then((idsData)=>{
 
         if(idsData.length == 0){
-          
           getLongtailFromScrappedDataInDb(dt.page_html);
 
           IdsModel({page_id: dt._id}).save()
@@ -123,21 +135,27 @@ function run_longtail_scrapper(){
 }
 
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
-let scheduled = cron.schedule('0 * * * *', () => {
+let scheduled = cron.schedule('0 */12 * * *', () => {
   run_longtail_scrapper();
 });
 
+
 scheduled.start();
 
-app.get('/longtail/:keyword',async (req, res)=>{
+app.get('/longtail/:keyword', (req, res)=>{
   try{
-    const results = await LongtailModel.find({ longtail_keyword: { $regex : req.params.keyword, $options: 'i'}})
-    .sort({ score: -1 })
-    .limit(5)
-    .toArray()
-
-    res.json(results);
-  } 
+    LongtailModel.find({ longtail_keyword: { $regex : req.params.keyword, $options: 'i'}})
+    .then((data)=>{
+      if(data.length > 0){
+        let sortedData = data.sort((a,b) => b.score - a.score)
+        let top10Data = sortedData.slice(0, 10);
+        res.json(top10Data)
+      }else{
+        res.status(300).json(`No longtail keyword associated with ${req.params.keyword}.`);
+      }
+      
+      })
+  }
   catch(error){
     console.log("Error retrieving data" + error);
     res.status(500).send('Internal Server Error');
