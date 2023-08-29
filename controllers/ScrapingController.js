@@ -6,6 +6,7 @@ const unirest = require('unirest');
 
 const bodyParser = require('body-parser');
 const PagesModel = require('../models/PagesModel');
+const SitesModel = require('../models/SitesModel');
 
 const urlEncoded = bodyParser.urlencoded({extended: false});
 
@@ -47,13 +48,14 @@ app.post('/scrape', urlEncoded ,(req, res)=>{
     PagesModel.find({page_link: req.body.url})
     .then(data => {
       if(data.length > 0){
-        res.json('found');
+        res.json(savedData);
       }else{
         PagesModel(savedData).save()
         .then(()=>{
+          //SitesModel.find({})
           res.json(savedData);
         })
-      }
+            }
     })
   
     //res.send(savedData);
