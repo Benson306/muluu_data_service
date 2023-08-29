@@ -64,21 +64,21 @@ app.get('/longtail', (req, res)=>{
               const words = phrase.split(' ');
                 if(words.length > 3 && words.length < 12){
 
-                  // let totalTfIdfScore = 0;
+                  let totalTfIdfScore = 0;
 
-                  // words.forEach(token => {
-                  //   let score = tfidf.tfidfs(token, (i, measure) => measure);
-                  //   totalTfIdfScore += Number(score[0].toFixed(3));
-                  // });
+                  words.forEach(token => {
+                    let score = tfidf.tfidfs(token, (i, measure) => measure);
+                    totalTfIdfScore += Number(score[0].toFixed(3));
+                  });
 
-                  // sensibleKeywords.push({ phrase, tfidfScore: totalTfIdfScore });
+                  sensibleKeywords.push({ phrase, tfidfScore: Number(totalTfIdfScore.toFixed(3)) });
             
-                  sensibleKeywords.push(phrase);
+                  //sensibleKeywords.push(phrase);
                 }
             })
 
             // Sort keywords based on TF-IDF scores
-            //sensibleKeywords.sort((a, b) => b.tfidfScore - a.tfidfScore);
+            sensibleKeywords.sort((a, b) => b.tfidfScore - a.tfidfScore);
 
             res.json(sensibleKeywords);
         })

@@ -16,7 +16,7 @@ mongoose.connect(mongoURI);
 let keywordsController = require('./controllers/KeywordsController');
 app.use('/', keywordsController);
 
-let longtailController = require('./controllers/LongtailContoller');
+let longtailController = require('./controllers/LongtailController');
 app.use('/', longtailController);
 
 let scrapingController = require('./controllers/ScrapingController');
