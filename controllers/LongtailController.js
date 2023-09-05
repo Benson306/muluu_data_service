@@ -149,7 +149,21 @@ app.get('/longtail/:keyword', (req, res)=>{
       if(data.length > 0){
         let sortedData = data.sort((a,b) => b.score - a.score)
         let top10Data = sortedData.slice(0, 10);
-        res.json(top10Data)
+
+        // Create an object to store unique keywords
+        const uniqueKeywords = {};
+
+        // Use filter to remove duplicates
+        const filteredData = top10Data.filter((obj) => {
+          if (!uniqueKeywords[obj.keyword]) {
+            // If the keyword is not already in the object, mark it as seen
+            uniqueKeywords[obj.keyword] = true;
+            return true; // Include this object in the filtered array
+          }
+          return false; // Exclude this object from the filtered array
+        });
+
+        res.json(filteredData)
       }else{
         res.status(300).json(`No longtail keyword associated with ${req.params.keyword}.`);
       }
