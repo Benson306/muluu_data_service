@@ -57,7 +57,7 @@ app.post('/scrape', urlEncoded ,(req, res)=>{
         })
             }
     })
-  
+
     //res.send(savedData);
 
   });
