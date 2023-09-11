@@ -56,10 +56,12 @@ function getLongtailFromScrappedDataInDb(scrapedData){
           }
         }
 
+        const filteredSensibleKeywords = keywords.filter(keyword => !/\d/.test(keyword));
+
       //Extract keywords with a minimum length of three words 
       const sensibleKeywords = [];
 
-      keywords.forEach(phrase => {
+      filteredSensibleKeywords.forEach(phrase => {
         const words = phrase.split(' ');
           if(words.length > 3 && words.length < 12){
 
@@ -131,7 +133,7 @@ function run_longtail_scrapper(){
   })
 }
 
-//run_longtail_scrapper();
+run_longtail_scrapper();
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
 let scheduled = cron.schedule('0 */6 * * *', () => {
   run_longtail_scrapper();
