@@ -15,8 +15,6 @@ let cron = require('node-cron');
 const PagesModel = require('../models/PagesModel');
 const IdsModel = require('../models/IdsModel');
 
-const urlEncoded = bodyParser.urlencoded({extended: false});
-
 //Scheduled longtail scrapper
 function getLongtailFromScrappedDataInDb(scrapedData){
       // Initialize TF-IDF instance
@@ -80,7 +78,6 @@ function getLongtailFromScrappedDataInDb(scrapedData){
 
       // Sort keywords based on TF-IDF scores
       sensibleKeywords.sort((a, b) => b.score - a.score);
-      
       //Save to DB
       sensibleKeywords.forEach((keyword)=>{
         if(keyword.score > 4){
@@ -89,7 +86,6 @@ function getLongtailFromScrappedDataInDb(scrapedData){
           .then((data)=>{
           
             if(data.length == 0){
-              console.log('data found')
               //Save if there are no duplicates
                 LongtailModel(keyword).save()
                 .then(()=>{
@@ -109,6 +105,7 @@ function getLongtailFromScrappedDataInDb(scrapedData){
 }
 
 function run_longtail_scrapper(){
+  console.log('Run');
   PagesModel.find({})
   .then((data)=>{   
     data.forEach(dt =>{
@@ -134,8 +131,9 @@ function run_longtail_scrapper(){
   })
 }
 
+//run_longtail_scrapper();
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
-let scheduled = cron.schedule('0 */12 * * *', () => {
+let scheduled = cron.schedule('0 */6 * * *', () => {
   run_longtail_scrapper();
 });
 
@@ -150,20 +148,16 @@ app.get('/longtail/:keyword', (req, res)=>{
         let sortedData = data.sort((a,b) => b.score - a.score)
         let top10Data = sortedData.slice(0, 10);
 
-        // Create an object to store unique keywords
-        const uniqueKeywords = {};
+        const nonDuplicates = [];
 
-        // Use filter to remove duplicates
-        const filteredData = top10Data.filter((obj) => {
-          if (!uniqueKeywords[obj.keyword]) {
-            // If the keyword is not already in the object, mark it as seen
-            uniqueKeywords[obj.keyword] = true;
-            return true; // Include this object in the filtered array
+        top10Data.map((top)=>{
+          if(!nonDuplicates.includes(top.longtail_keyword)){
+            nonDuplicates.push(top.longtail_keyword);
           }
-          return false; // Exclude this object from the filtered array
-        });
+        })
 
-        res.json(filteredData)
+
+        res.json(nonDuplicates);
       }else{
         res.status(300).json(`No longtail keyword associated with ${req.params.keyword}.`);
       }
