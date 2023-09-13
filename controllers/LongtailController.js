@@ -9,7 +9,7 @@ const stopwords = require('natural').stopwords;
 
 let app =  express.Router();
 
-const bodyParser = require('body-parser');
+
 
 let cron = require('node-cron');
 const PagesModel = require('../models/PagesModel');
@@ -107,7 +107,6 @@ function getLongtailFromScrappedDataInDb(scrapedData){
 }
 
 function run_longtail_scrapper(){
-  console.log('Run');
   PagesModel.find({})
   .then((data)=>{   
     data.forEach(dt =>{
@@ -133,7 +132,7 @@ function run_longtail_scrapper(){
   })
 }
 
-run_longtail_scrapper();
+//run_longtail_scrapper();
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
 let scheduled = cron.schedule('0 */6 * * *', () => {
   run_longtail_scrapper();
