@@ -9,7 +9,7 @@ const stopwords = require('natural').stopwords;
 
 let app =  express.Router();
 
-const bodyParser = require('body-parser');
+
 
 let cron = require('node-cron');
 const PagesModel = require('../models/PagesModel');
@@ -107,7 +107,6 @@ function getLongtailFromScrappedDataInDb(scrapedData){
 }
 
 function run_longtail_scrapper(){
-  console.log('Run');
   PagesModel.find({})
   .then((data)=>{   
     data.forEach(dt =>{
