@@ -133,7 +133,7 @@ function run_longtail_scrapper(){
   })
 }
 
-run_longtail_scrapper();
+//run_longtail_scrapper();
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
 let scheduled = cron.schedule('0 */6 * * *', () => {
   run_longtail_scrapper();
