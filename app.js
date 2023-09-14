@@ -22,6 +22,9 @@ app.use('/', longtailController);
 let scrapingController = require('./controllers/ScrapingController');
 app.use('/', scrapingController);
 
+let industryController = require('./controllers/IndustryController');
+app.use('/', industryController);
+
 let port = 3000;
 
 app.listen(port, ()=>{
