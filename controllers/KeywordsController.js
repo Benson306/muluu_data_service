@@ -12,6 +12,9 @@ const urlEncoded = bodyParser.urlencoded({ extended: false })
 const cheerio = require('cheerio');
 const axios = require('axios');
 const natural = require('natural');
+const SitesModel = require('../models/SitesModel');
+const PagesModel = require('../models/PagesModel');
+const IndustryKeywordsModel = require('../models/IndustryKeywordsModel');
 const stopwords = require('natural').stopwords;
 
 //Make request to serper
@@ -76,60 +79,80 @@ app.get('/keyword/:word', urlEncoded, (req, res)=>{
 
 
 
-async function fetchAndExtractKeywords(url) {
+function fetchAndExtractKeywords(data) {
   try {
-    const response = await axios.get(url);
-    const $ = cheerio.load(response.data);
+    const $ = cheerio.load(data);
 
     // Extract full paragraphs from the webpage
-    const paragraphs = [];
+    let pageText = "";
     $('p').each((index, element) => {
       const paragraphText = $(element).text().trim();
       if (paragraphText) {
-        paragraphs.push(paragraphText);
+        pageText = pageText.concat(paragraphText);
       }
     });
 
-    return paragraphs;
+    return pageText;
 
-    //return tokens;
   } catch (error) {
-    console.error(`Error fetching or processing page ${url}:`, error);
+    console.error(`Error fetching or processing page ${data}:`, error);
     return ""; // Return an empty array if there's an error
   }
 }
 
-
-app.post('/keyword_opportunity', urlEncoded, async (req, res)=>{
+app.post('/keyword_opportunity', urlEncoded, (req, res)=>{
 
   const url = req.body.url;
-  const industry = req.body.industry;
-  
-  const response = await axios.get(url);
-  const $ = cheerio.load(response.data);
-  let visitedUrls = [];
-  // Find and follow links on the page
-  $('a').each((index, element) => {
-    const link = $(element).attr('href');
-    if(link !== undefined && link.includes(url) && !visitedUrls.includes(link))
-    {
-      visitedUrls.push(link);
+  const selected_industry = req.body.industry;
+
+  //find url in sites collection
+  PagesModel.find({ domain : { $regex : url, $options: 'i'} })
+  .then(async (response) => {
+    if(response.length !== 0){
+
+      let siteText = "";
+
+      //Find the scraped data from this sites
+      response.map((data) => {
+        siteText =  siteText.concat(fetchAndExtractKeywords(data.page_html))
+      })
+
+      //Find Keywords related to the industry
+      let keyword_opportunity = [];
+      
+      const industryResponses = await IndustryKeywordsModel.find({
+        industry: { $regex: selected_industry, $options: 'i' }
+      });
+
+      if (industryResponses.length > 0) {
+        industryResponses[0].keywords.forEach(keyword => {
+          //Remove special characters and numbers from text
+          const filteredParagraph = siteText.replace(/[^a-zA-Z\s]/g, '');
+
+          // Convert the paragraph to lowercase for case-insensitive comparison
+          const lowercasedParagraph = filteredParagraph.toLowerCase();
+
+          const keywordWords = keyword.split(' ');
+          // Check if keyword exists in the site
+
+          for (const word of keywordWords) {
+            if (lowercasedParagraph.includes(word.toLowerCase())) {
+              return true; // At least one word from the keyword is found
+            }else{
+              keyword_opportunity.push(keyword)
+            }
+          }
+
+        });
+      }
+
+      res.json(keyword_opportunity);
+    }else{
+      res.json('not found')
     }
-  });
+  })
 
-  const paragraphsArray = [];
-
-  for (const _link of visitedUrls) {
-    const paragraphs = await fetchAndExtractKeywords(_link);
-    paragraphsArray.push(...paragraphs);
-  }
-
-  const filteredParagraphs = paragraphsArray.filter(paragraph => {
-    const words = paragraph.split(' ');
-    return  words.length >= 4 && words.length <= 10 ;
-});
-
-  res.json(filteredParagraphs)
+  
 
 })
 

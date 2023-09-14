@@ -3,6 +3,6 @@ let mongoose = require('mongoose');
 //page_ids schema
 let industrySchema = new mongoose.Schema({}, {strict: false});
 
-let IndustryModel = mongoose.model('industry_keywords', industrySchema);
+let IndustryKeywordsModel = mongoose.model('industry_keywords', industrySchema);
 
-module.exports = IndustryModel;
+module.exports = IndustryKeywordsModel;

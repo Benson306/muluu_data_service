@@ -9,7 +9,7 @@ app.post('/add_multiple_industries', urlEncoded, (req, res)=>{
     req.body.data.map( data =>{
         IndustryModel(data).save()
         .then(()=>{
-            console.log(`${data.industry} industry saved`);
+            //console.log(`${data.industry} industry saved`);
         })
     })
     res.json('Industries Added');
