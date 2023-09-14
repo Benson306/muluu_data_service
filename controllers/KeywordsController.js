@@ -15,6 +15,7 @@ const natural = require('natural');
 const SitesModel = require('../models/SitesModel');
 const PagesModel = require('../models/PagesModel');
 const IndustryKeywordsModel = require('../models/IndustryKeywordsModel');
+const KeywordOpportunityModel = require('../models/KeywordsOpportunityModel');
 const stopwords = require('natural').stopwords;
 
 //Make request to serper
@@ -146,7 +147,17 @@ app.post('/keyword_opportunity', urlEncoded, (req, res)=>{
         });
       }
 
-      res.json(keyword_opportunity);
+      let dbData = {
+        site : url,
+        industry: selected_industry,
+        keywords: keyword_opportunity
+      }
+      //Add To Db
+      KeywordOpportunityModel(dbData).save()
+      .then(()=>{
+        res.json(keyword_opportunity);
+      })
+      
     }else{
       res.json('not found')
     }
