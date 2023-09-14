@@ -46,11 +46,11 @@ function getFormattedDate() {
 }
 
 
-app.post('/keyword', urlEncoded, (req, res)=>{
+app.get('/keyword/:word', urlEncoded, (req, res)=>{
 
   const formattedDate = getFormattedDate();
 
-  const keyword =  req.body.word;
+  const keyword =  req.params.word;
 
   //Make request and receive date as a callback
   make_request(keyword,(data)=>{
@@ -124,10 +124,12 @@ app.post('/keyword_opportunity', urlEncoded, async (req, res)=>{
     paragraphsArray.push(...paragraphs);
   }
 
+  const filteredParagraphs = paragraphsArray.filter(paragraph => {
+    const words = paragraph.split(' ');
+    return  words.length >= 4 && words.length <= 10 ;
+});
 
-
-
-  res.json(paragraphsArray)
+  res.json(filteredParagraphs)
 
 })
 
