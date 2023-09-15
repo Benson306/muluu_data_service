@@ -49,7 +49,6 @@ function getFormattedDate() {
   return day + month + year;
 }
 
-
 app.get('/keyword/:word', urlEncoded, (req, res)=>{
 
   const formattedDate = getFormattedDate();
@@ -77,7 +76,6 @@ app.get('/keyword/:word', urlEncoded, (req, res)=>{
 
    
 })
-
 
 
 function fetchAndExtractKeywords(data) {
@@ -108,7 +106,6 @@ function shuffleArray(array) {
     [array[i], array[j]] = [array[j], array[i]]; // Swap elements
   }
 }
-
 
 app.post('/keyword_opportunity', urlEncoded, (req, res)=>{
 
