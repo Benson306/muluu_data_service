@@ -9,8 +9,6 @@ const stopwords = require('natural').stopwords;
 
 let app =  express.Router();
 
-
-
 let cron = require('node-cron');
 const PagesModel = require('../models/PagesModel');
 const IdsModel = require('../models/IdsModel');
