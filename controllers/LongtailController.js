@@ -1,11 +1,9 @@
-const axios = require('axios');
 const natural = require('natural');
 const { TfIdf } = natural;
 let express =  require('express');
 const cheerio = require('cheerio');
 const LongtailModel = require('../models/LongtailModel');
 
-const stopwords = require('natural').stopwords;
 
 let app =  express.Router();
 
@@ -97,7 +95,6 @@ function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-
 const BATCH_SIZE = 100; // Adjust the batch size as needed
 
 async function run_longtail_scrapper() {
@@ -134,11 +131,11 @@ async function run_longtail_scrapper() {
 }
 
 run_longtail_scrapper();
+
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
 let scheduled = cron.schedule('0 */6 * * *', () => {
   run_longtail_scrapper();
 });
-
 
 scheduled.start();
 
