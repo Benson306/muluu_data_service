@@ -41,12 +41,14 @@ function getLongtailFromScrappedDataInDb(scrapedData){
       })
       
       // Filter Keywords with numbers
-      //const sentences = paragraphs.filter(keyword => !/\d/.test(keyword));
+      const sentences = paragraphs.filter(keyword => !/\d/.test(keyword));
 
+      //Remove keywords with special characters
+      //const filteredKeywords = sentences.filter(keyword => !/[^a-zA-Z0-9]/.test(keyword));
 
       let phrases = [];
       // Get phrases with more than 3 words and less 
-      paragraphs.forEach(sentence => {
+      sentences.forEach(sentence => {
         const words = sentence.split(' ');
            if(words.length > 3 && words.length < 12){
             const words = sentence.split(' ');
@@ -66,12 +68,12 @@ function getLongtailFromScrappedDataInDb(scrapedData){
       // Sort keywords based on TF-IDF scores
       phrases.sort((a, b) => b.score - a.score);
 
-
       //Save to DB
       phrases.forEach((keyword)=>{
         if(keyword.score > 4){
+          const sanitizedKeyword = escapeRegExp(keyword.longtail_keyword);
           //Check for duplicates
-          LongtailModel.find({ longtail_keyword: { $regex : keyword.longtail_keyword, $options: 'i'}})
+          LongtailModel.find({ longtail_keyword: { $regex : sanitizedKeyword, $options: 'i'}})
           .then((data)=>{
           
             if(data.length == 0){
@@ -83,44 +85,55 @@ function getLongtailFromScrappedDataInDb(scrapedData){
                 .catch(()=>{
                   console.log("Error in saving longtail keyword");
                 })
-            }else{
-              console.log('keyword not found')
             }
             
           })
         }
       })
-
       
 }
 
-function run_longtail_scrapper(){
-  PagesModel.find({})
-  .then((data)=>{   
-    data.forEach(dt =>{
-      //Check if id exists in page_ids collection
-      IdsModel.find({page_id: dt._id})
-      .then((idsData)=>{
-
-        if(idsData.length == 0){
-          getLongtailFromScrappedDataInDb(dt.page_html);
-
-          IdsModel({page_id: dt._id}).save()
-          .then(()=>{
-            console.log("Page Id saved");
-          })
-          .catch(()=>{
-            console.log("Error In Saving page Id");
-          })
-        }
-      })
-
-      
-    })
-  })
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-//run_longtail_scrapper();
+
+const BATCH_SIZE = 100; // Adjust the batch size as needed
+
+async function run_longtail_scrapper() {
+  try {
+    const data = await PagesModel.find({}).lean().exec();
+    const totalRecords = data.length;
+    let processedCount = 0;
+
+    for (let i = 0; i < totalRecords; i += BATCH_SIZE) {
+      const batch = data.slice(i, i + BATCH_SIZE);
+
+      await Promise.all(
+        batch.map(async dt => {
+          // Check if id exists in page_ids collection
+          const idsData = await IdsModel.find({ page_id: dt._id }).lean().exec();
+
+          if (idsData.length === 0) {
+            await getLongtailFromScrappedDataInDb(dt.page_html);
+
+            await IdsModel.create({ page_id: dt._id });
+            console.log("Page Id saved - " + dt._id);
+          }
+        })
+      );
+
+      processedCount += batch.length;
+      console.log(`Processed ${processedCount} out of ${totalRecords}`);
+    }
+
+    console.log("All records processed.");
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+run_longtail_scrapper();
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
 let scheduled = cron.schedule('0 */6 * * *', () => {
   run_longtail_scrapper();
@@ -162,86 +175,28 @@ app.get('/longtail/:keyword', (req, res)=>{
 
 module.exports = app;
 
+// function run_longtail_scrapper(){
+//   PagesModel.find({})
+//   .then((data)=>{   
+//     data.forEach(dt =>{
+//       //Check if id exists in page_ids collection
+//       IdsModel.find({page_id: dt._id})
+//       .then((idsData)=>{
 
-// const textContent = $('p').text();
+//         if(idsData.length == 0){
+//           getLongtailFromScrappedDataInDb(dt.page_html);
 
-      // // Tokenize the target keyword
-      // let tokenizer = new natural.WordTokenizer();
+//           IdsModel({page_id: dt._id}).save()
+//           .then(()=>{
+//             console.log("Page Id saved");
+//           })
+//           .catch(()=>{
+//             console.log("Error In Saving page Id");
+//           })
+//         }
+//       })
 
-      // //const tokens = tokenizer.tokenize(textContent);
-
-      // const filteredTokens = tokenizer.tokenize(textContent);
-
-      // //Remove stopwords
-      // //const filteredTokens = tokens.filter(token => !stopwords.includes(token.toLowerCase()));
-
-      // // Add documents (text) to the TF-IDF instance
-      // tfidf.addDocument(filteredTokens);
-
-      // // Calculate TF-IDF for the target keyword
-      // const keywords = [];
-
-      // const MIN_KEYWORD_LENGTH = 3;
-      // let currentKeyword = '';
-
-      // for (const word of filteredTokens) {
-      //     if (word.length >= MIN_KEYWORD_LENGTH) {
-      //       if (currentKeyword === '') {
-      //         currentKeyword = word;
-      //       } else {
-      //         currentKeyword += ' ' + word;
-      //       }
-      //     } else if (currentKeyword !== '') {
-      //       keywords.push(currentKeyword);
-      //       currentKeyword = '';
-      //     }
-      //   }
-
-      //   const filteredSensibleKeywords = keywords.filter(keyword => !/\d/.test(keyword));
-
-      // //Extract keywords with a minimum length of three words 
-      // const sensibleKeywords = [];
-
-      // filteredSensibleKeywords.forEach(phrase => {
-      //   const words = phrase.split(' ');
-      //     if(words.length > 3 && words.length < 12){
-
-      //       let totalTfIdfScore = 0;
-
-      //       words.forEach(token => {
-      //         let score = tfidf.tfidfs(token, (i, measure) => measure);
-      //         totalTfIdfScore += Number(score[0].toFixed(3));
-      //       });
-
-      //       sensibleKeywords.push({ longtail_keyword: phrase, score: Number(totalTfIdfScore.toFixed(3)) });
-
-      //       //sensibleKeywords.push(phrase);
-      //     }
-      // })
-
-      // // Sort keywords based on TF-IDF scores
-      // sensibleKeywords.sort((a, b) => b.score - a.score);
-      // //Save to DB
-      // sensibleKeywords.forEach((keyword)=>{
-      //   if(keyword.score > 4){
-      //     //Check for duplicates
-      //     LongtailModel.find({ longtail_keyword: { $regex : keyword.longtail_keyword, $options: 'i'}})
-      //     .then((data)=>{
-          
-      //       if(data.length == 0){
-      //         //Save if there are no duplicates
-      //           LongtailModel(keyword).save()
-      //           .then(()=>{
-      //             console.log('Longtail Data Saved');
-      //           })
-      //           .catch(()=>{
-      //             console.log("Error in saving longtail keyword");
-      //           })
-      //       }else{
-      //         console.log('keyword not found')
-      //       }
-            
-      //     })
-
-      //   }
-      // })
+      
+//     })
+//   })
+// }
