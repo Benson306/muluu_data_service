@@ -55,7 +55,7 @@ app.post('/scrape', urlEncoded ,(req, res)=>{
           //SitesModel.find({})
           res.json(savedData);
         })
-            }
+      }
     })
 
     //res.send(savedData);
