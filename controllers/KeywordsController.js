@@ -107,6 +107,12 @@ function shuffleArray(array) {
   }
 }
 
+
+const Redis = require('ioredis');
+
+const redisClient = new Redis();
+
+
 app.post('/keyword_opportunity', urlEncoded, (req, res)=>{
 
   const url = req.body.url;
@@ -176,7 +182,14 @@ app.post('/keyword_opportunity', urlEncoded, (req, res)=>{
                 
               }else{
                 //Implement Redis Part
-                res.json('not found')
+                redisClient.publish('scrape_site', url, (err) => {
+                  if (err) {
+                    console.error('Error publishing message to Redis:', err);
+                    return res.status(500).json({ error: 'Failed to publish message' });
+                  }
+              
+                  res.status(200).json({ message: 'Message published successfully' });
+                });
               }
             })
     }
@@ -184,21 +197,21 @@ app.post('/keyword_opportunity', urlEncoded, (req, res)=>{
 
 })
 
-const redis = require("redis")
+// Set up a Redis subscriber
+const redisSubscriber = new Redis();
 
-// initialize using default config
-const RedisClient = redis.createClient()
+redisSubscriber.subscribe('scrap_site', (err, count) => {
+  if (err) {
+    console.error('Error subscribing to channel:', err);
+  } else {
+    console.log(`Subscribed to scrape_site channel with ${count} subscriber(s).`);
+  }
+});
 
-const connectRedis = async () => {
-    // connect to redis
-    await RedisClient.connect()
+// Listen for incoming messages on the channel
+redisSubscriber.on('message', (channel, message) => {
+  console.log(`Received message on channel ${channel}: ${message}`);
+});
 
-    // handle error
-    RedisClient.on('error', (err) => {
-        console.error(`An error occurred with Redis: ${err}`)
-    })
 
-    console.log('Redis connected successfully...')
-}
-connectRedis();
 module.exports = app;
