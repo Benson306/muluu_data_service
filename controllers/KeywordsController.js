@@ -184,4 +184,21 @@ app.post('/keyword_opportunity', urlEncoded, (req, res)=>{
 
 })
 
+const redis = require("redis")
+
+// initialize using default config
+const RedisClient = redis.createClient()
+
+const connectRedis = async () => {
+    // connect to redis
+    await RedisClient.connect()
+
+    // handle error
+    RedisClient.on('error', (err) => {
+        console.error(`An error occurred with Redis: ${err}`)
+    })
+
+    console.log('Redis connected successfully...')
+}
+connectRedis();
 module.exports = app;
