@@ -98,6 +98,7 @@ function escapeRegExp(string) {
 const BATCH_SIZE = 100; // Adjust the batch size as needed
 
 async function run_longtail_scrapper() {
+  getCurrentTime();
   try {
     const data = await PagesModel.find({}).lean().exec();
     const totalRecords = data.length;
@@ -130,7 +131,7 @@ async function run_longtail_scrapper() {
   }
 }
 
-//run_longtail_scrapper();
+run_longtail_scrapper();
 
 function getCurrentTime(){
   const currentDate = new Date();
@@ -148,8 +149,6 @@ function getCurrentTime(){
 
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.
 let scheduled = cron.schedule('0 */6 * * *', () => {
-  getCurrentTime();
-
   run_longtail_scrapper();
 });
 
