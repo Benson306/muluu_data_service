@@ -25,6 +25,9 @@ app.use('/', scrapingController);
 let industryController = require('./controllers/IndustryController');
 app.use('/', industryController);
 
+let socialsController = require('./controllers/SocialMediaController');
+app.use('/', socialsController);
+
 let port = 3000;
 
 app.listen(port, ()=>{
