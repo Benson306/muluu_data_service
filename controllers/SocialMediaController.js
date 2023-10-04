@@ -9,7 +9,7 @@ let urlEncoded = bodyParser.urlencoded({ extended: false});
 
 let unirest = require('unirest');
 
-function tiktok_data(keyword, callback){
+function tiktok_data(keyword, count, callback){
 
     unirest('GET', 'https://scraptik.p.rapidapi.com/search-posts')
     .headers({
@@ -17,7 +17,7 @@ function tiktok_data(keyword, callback){
         'X-RapidAPI-Host': 'scraptik.p.rapidapi.com'
     })
     .query(`keyword=${keyword}`)
-    .query('count=3')
+    .query(`count=${count}`)
     .end( response =>{
         let data = {};
         let hashtags = [];
@@ -36,7 +36,15 @@ function tiktok_data(keyword, callback){
 
             newArray.push(obj)
         })
-        data.hashtags = hashtags;
+
+        const uniqueHashtags = [];
+
+        for (const item of hashtags) {
+        if (!uniqueHashtags.includes(item)) {
+            uniqueHashtags.push(item);
+        }
+        }
+        data.hashtags = uniqueHashtags;
         data.posts = newArray;
         callback(data);
     })
@@ -77,13 +85,14 @@ function instagram_data(keyword, callback){
     })
 }
 
-app.get('/socials/:keyword', urlEncoded, (req, res)=>{
-    let keyword = req.params.keyword;
+app.post('/socials', urlEncoded, (req, res)=>{
+    let keyword = req.body.keyword;
+    let count = req.body.count;
     let data = {};
 
     instagram_data(keyword, (insta_response)=>{
         data.instagram = insta_response;
-        tiktok_data(keyword, (result)=>{
+        tiktok_data(keyword, count, (result)=>{
             data.tiktok = result;
             res.json(data)
         })
