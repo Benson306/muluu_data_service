@@ -1,5 +1,3 @@
-let mongoose = require('mongoose');
-
 let express = require('express');
 let app = express.Router();
 
@@ -30,9 +28,11 @@ function tiktok_data(keyword, count, callback){
             obj.username = data.author.nickname;
             obj.user_id = data.author.uid;
 
-            let post_hastags = data.desc.match(/#\w+/g);
+            let post_hashtags = data.desc.match(/#\w+/g);
 
-            hashtags.push(...post_hastags);
+            if (post_hashtags !== null) {
+                hashtags.push(...post_hashtags);
+            }
 
             newArray.push(obj)
         })
@@ -51,17 +51,51 @@ function tiktok_data(keyword, count, callback){
 
 }
 
-function twitter_data(keyword, callback){
+function twitter_data(keyword, count, callback){
     //instagram
-    unirest('GET', 'https://twitter-v23.p.rapidapi.com/Search/')
+    unirest('GET', 'https://twitter-api45.p.rapidapi.com/search.php')
     .headers({
         'content-type': 'application/json',
         'X-RapidAPI-Key':  `${process.env.TWITTER_V2_API_KEY}`,
-        'X-RapidAPI-Host': 'twitter-v23.p.rapidapi.com'
+        'X-RapidAPI-Host': 'twitter-api45.p.rapidapi.com'
     })
-    .query(`q=${keyword}`)
-    .end(response => {  
-        callback(response.body);
+    .query(`query=${keyword}`)
+    .end(response => {
+        let hashtags = [];
+        let posts = [];
+
+        let tweets = response.body.timeline.slice(0, count);
+
+        tweets.forEach(tweet =>{
+            let obj  = { }
+            obj.username = tweet.screen_name;
+            obj.user_profile_pic = tweet.user_info.avatar;
+            obj.post = tweet.text;
+
+            let post_hashtags = tweet.text.match(/#\w+/g);
+            
+            if (post_hashtags !== null) {
+                hashtags.push(...post_hashtags);
+            }
+
+            posts.push(obj);
+
+        })
+
+        const uniqueHashtags = [];
+
+        for (const item of hashtags) {
+            if (!uniqueHashtags.includes(item)) {
+                uniqueHashtags.push(item);
+            }
+        }
+
+        let data = { };
+        data.hashtags = hashtags;
+        data.posts = posts;
+
+        callback(data);
+
     })
 }
 
@@ -113,16 +147,18 @@ app.post('/socials', urlEncoded, (req, res)=>{
     let count = req.body.count;
     let data = {};
 
+    data.keyword = keyword;
+
     instagram_data(keyword, count, (insta_response)=>{
         data.instagram = insta_response;
         tiktok_data(keyword, count, (result)=>{
             data.tiktok = result;
-            res.json(data)
+            twitter_data(keyword, count, (x_response)=>{
+                data.x = x_response;
+                res.json(data);
+            })
         })
-        // twitter_data(keyword, (x_response)=>{
-        //     data.x = x_response;
-        //     res.json(data.x);
-        // })
+        
     })
 
 
