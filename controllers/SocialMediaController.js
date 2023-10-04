@@ -6,6 +6,7 @@ let bodyParser = require('body-parser');
 let urlEncoded = bodyParser.urlencoded({ extended: false});
 
 let unirest = require('unirest');
+const SocialMediaModel = require('../models/SocialMediaModel');
 
 function tiktok_data(keyword, count, callback){
 
@@ -149,17 +150,33 @@ app.post('/socials', urlEncoded, (req, res)=>{
 
     data.keyword = keyword;
 
-    instagram_data(keyword, count, (insta_response)=>{
-        data.instagram = insta_response;
-        tiktok_data(keyword, count, (result)=>{
-            data.tiktok = result;
-            twitter_data(keyword, count, (x_response)=>{
-                data.x = x_response;
-                res.json(data);
+    // Find if it has been queried recently
+    SocialMediaModel.find({ keyword : keyword})
+    .then(response =>{
+        if(response.length > 0){
+            res.json(response)
+        }else{
+
+            instagram_data(keyword, count, (insta_response)=>{
+                data.instagram = insta_response;
+                tiktok_data(keyword, count, (result)=>{
+                    data.tiktok = result;
+                    twitter_data(keyword, count, (x_response)=>{
+                        data.x = x_response;
+                        // Save to DB
+                        SocialMediaModel(data).save()
+                        .then(()=>{
+                            res.json(data);
+                        })
+                    })
+                })
+                
             })
-        })
-        
+
+        }
     })
+
+    
 
 
 })
