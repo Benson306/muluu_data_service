@@ -65,7 +65,7 @@ function twitter_data(keyword, callback){
     })
 }
 
-function instagram_data(keyword, callback){
+function instagram_data(keyword, count, callback){
     //instagram
     unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/search')
     .headers({
@@ -80,8 +80,31 @@ function instagram_data(keyword, callback){
         
         //Instagram Hastags - response.body.response.body.hashtags
         //Instagram Users - response.body.response.body.users
+        let raw_users = response.body.response.body.users.slice(0, count);
 
-        callback(response.body.response.body)
+        let users = [];
+
+        raw_users.forEach( user =>{
+            let obj = { };
+            obj.user_id = user.user.pk_id;
+            obj.fullname = user.user.full_name;
+            obj.username = user.user.username;
+            obj.profile_pic_url = user.user.profile_pic_url;
+            users.push(obj);
+        })
+
+        let hashtags = [];
+        response.body.response.body.hashtags.forEach(hashtag =>{
+            hashtags.push("#"+hashtag.hashtag.name);
+        })
+
+        let data = { };
+
+        data.users = users;
+        data.hastags = hashtags;
+
+
+        callback(data)
     })
 }
 
@@ -90,7 +113,7 @@ app.post('/socials', urlEncoded, (req, res)=>{
     let count = req.body.count;
     let data = {};
 
-    instagram_data(keyword, (insta_response)=>{
+    instagram_data(keyword, count, (insta_response)=>{
         data.instagram = insta_response;
         tiktok_data(keyword, count, (result)=>{
             data.tiktok = result;
