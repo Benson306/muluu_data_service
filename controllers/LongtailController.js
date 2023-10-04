@@ -131,7 +131,7 @@ async function run_longtail_scrapper() {
   }
 }
 
-run_longtail_scrapper();
+// run_longtail_scrapper();
 
 function getCurrentTime(){
   const currentDate = new Date();
