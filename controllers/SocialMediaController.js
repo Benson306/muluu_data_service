@@ -12,7 +12,7 @@ function tiktok_data(keyword, count, callback){
 
     unirest('GET', 'https://scraptik.p.rapidapi.com/search-posts')
     .headers({
-        'X-RapidAPI-Key':  `${process.env.TWITTER_V2_API_KEY}`,
+        'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
         'X-RapidAPI-Host': 'scraptik.p.rapidapi.com'
     })
     .query(`keyword=${keyword}`)
@@ -32,6 +32,7 @@ function tiktok_data(keyword, count, callback){
             let post_hashtags = data.desc.match(/#\w+/g);
 
             if (post_hashtags !== null) {
+                
                 hashtags.push(...post_hashtags);
             }
 
@@ -45,6 +46,22 @@ function tiktok_data(keyword, count, callback){
             uniqueHashtags.push(item);
         }
         }
+            
+        // Get Hashtag View and use_count
+        // uniqueHashtags.forEach((hashtag)=>{
+        //     let cleanHashtag = hashtag.substring(1);
+        //     unirest('GET', 'https://scraptik.p.rapidapi.com/search-hashtags')
+        //     .headers({
+        //         'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
+        //         'X-RapidAPI-Host': 'scraptik.p.rapidapi.com'
+        //     })
+        //     .query(`keyword=${cleanHashtag}`)
+        //     .query('count=1')
+        //     .end( response =>{
+        //         console.log(`${hashtag} - ${response.body.challenge_list}`);
+        //     });
+        // })
+        
         data.hashtags = uniqueHashtags;
         data.posts = newArray;
         callback(data);
@@ -91,8 +108,9 @@ function twitter_data(keyword, count, callback){
             }
         }
 
+
         let data = { };
-        data.hashtags = hashtags;
+        data.hashtags = uniqueHashtags;
         data.posts = posts;
 
         callback(data);
@@ -133,6 +151,14 @@ function instagram_data(keyword, count, callback){
             hashtags.push("#"+hashtag.hashtag.name);
         })
 
+        const uniqueHashtags = [];
+
+        for (const item of hashtags) {
+            if (!uniqueHashtags.includes(item)) {
+                uniqueHashtags.push(item);
+            }
+        }
+
         let data = { };
 
         data.users = users;
@@ -148,15 +174,47 @@ app.post('/socials', urlEncoded, (req, res)=>{
     let count = req.body.count;
     let data = {};
 
+    let currentDate  = new Date();
+
     data.keyword = keyword;
+
+    data.timestamp = currentDate;
 
     // Find if it has been queried recently
     SocialMediaModel.find({ keyword : keyword})
     .then(response =>{
         if(response.length > 0){
-            res.json(response)
-        }else{
+            let dataTimestamp = new Date(response[0].timestamp);
 
+            // Calculate the difference in months
+            let monthDifference = (dataTimestamp.getFullYear() - currentDate.getFullYear()) * 12 + (dataTimestamp.getMonth() - currentDate.getMonth());
+
+            if(monthDifference < -2){
+                // Data is more than two months old
+                instagram_data(keyword, count, (insta_response)=>{
+                    data.instagram = insta_response;
+                    tiktok_data(keyword, count, (result)=>{
+                        data.tiktok = result;
+                        twitter_data(keyword, count, (x_response)=>{
+                            data.x = x_response;
+                            SocialMediaModel.findByIdAndDelete(response[0]._id)
+                            .then(()=>{
+                                // Save to DB
+                                SocialMediaModel(data).save()
+                                .then(()=>{
+                                    res.json(data);
+                                })
+                            })
+                            
+                        })
+                    })
+                    
+                })
+
+            }else{
+                res.json(response)
+            }
+        }else{
             instagram_data(keyword, count, (insta_response)=>{
                 data.instagram = insta_response;
                 tiktok_data(keyword, count, (result)=>{
