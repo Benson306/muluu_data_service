@@ -10,10 +10,11 @@ const SocialMediaModel = require('../models/SocialMediaModel');
 
 function tiktok_data(keyword, count, callback){
 
-    unirest('GET', 'https://scraptik.p.rapidapi.com/search-posts')
+    //unirest('GET', 'https://scraptik.p.rapidapi.com/search-posts')
+    unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/post')
     .headers({
         'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
-        'X-RapidAPI-Host': 'scraptik.p.rapidapi.com'
+        'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
     })
     .query(`keyword=${keyword}`)
     .query(`count=${count}`)
@@ -21,6 +22,7 @@ function tiktok_data(keyword, count, callback){
         let data = {};
         let hashtags = [];
         let newArray = [];
+
         response.body.aweme_list.forEach( data => {
             let obj = { };
 
