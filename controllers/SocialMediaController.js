@@ -71,6 +71,75 @@ function tiktok_data(keyword, count, callback){
 
 }
 
+function linkedin_data(keyword, count, callback){
+    unirest('GET', 'https://linkedin-public-search.p.rapidapi.com/postsearch')
+    .headers({
+        'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
+        'X-RapidAPI-Host': 'linkedin-public-search.p.rapidapi.com'
+    })
+    .query(`keyword=${keyword}`)
+    .query(`count=${1}`)
+    .end( response =>{
+        let data = { }
+        let posts = [];
+        let users = [];
+
+        if(response.body.dataCount > count){
+            let linkedInPosts = response.body.result.slice(0, count);
+
+            linkedInPosts.forEach( data => {
+                let user_obj = { };
+                
+                user_obj.username = data.nameSurname;
+                user_obj.profileTitle = data.profileTitle;
+                user_obj.profileUrl = data.profileURL;
+    
+                users.push(user_obj)
+    
+                let post_obj = { }
+                post_obj.postId = data.postID;
+                post_obj.postDescription = data.postDescription;
+                post_obj.reactionsCount = data.reactionCount;
+                post_obj.commentsCount = data.commentCount;
+                post_obj.postUrl = data.postUrl;
+    
+                posts.push(post_obj)
+            })
+    
+            data.users = users;
+            data.posts = posts;
+    
+            callback(data);
+        }else{
+            response.body.result.forEach( data => {
+                let user_obj = { };
+    
+                user_obj.profileUrl = data.profileURL;
+                user_obj.username = data.nameSurname;
+                user_obj.profileTitle = data.profileTitle;
+    
+                users.push(user_obj)
+    
+                let post_obj = { }
+                post_obj.postId = data.postID;
+                post_obj.postDescription = data.postDescription;
+                post_obj.reactionsCount = data.reactionCount;
+                post_obj.commentsCount = data.commentCount;
+                post_obj.postUrl = data.postUrl;
+    
+                posts.push(post_obj)
+            })
+    
+            data.users = users;
+            data.posts = posts;
+    
+            callback(data);
+        }
+
+       
+    })
+}
+
 function twitter_data(keyword, count, callback){
     //instagram
     unirest('GET', 'https://twitter-api45.p.rapidapi.com/search.php')
@@ -110,7 +179,6 @@ function twitter_data(keyword, count, callback){
             }
         }
 
-
         let data = { };
         data.hashtags = uniqueHashtags;
         data.posts = posts;
@@ -125,7 +193,7 @@ function instagram_data(keyword, count, callback){
     unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/search')
     .headers({
         'content-type': 'application/json',
-        'X-RapidAPI-Key': `${process.env.ROCKET_API_KEY_INSTAGRAM}`,
+        'X-RapidAPI-Key': `${process.env.NEW_TITOK_KEY}`,
         'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
     })
     .send(JSON.stringify({
@@ -223,11 +291,16 @@ app.post('/socials', urlEncoded, (req, res)=>{
                     data.tiktok = result;
                     twitter_data(keyword, count, (x_response)=>{
                         data.x = x_response;
-                        // Save to DB
-                        SocialMediaModel(data).save()
-                        .then(()=>{
-                            res.json(data);
+
+                        linkedin_data(keyword, count, (linked_response)=>{
+                            data.linkedIn = linked_response;
+                            // Save to DB
+                            SocialMediaModel(data).save()
+                            .then(()=>{
+                                res.json(data);
+                            })
                         })
+                        
                     })
                 })
                 

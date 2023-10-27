@@ -48,9 +48,9 @@ function getLongtailFromScrappedDataInDb(scrapedData){
       // Get phrases with more than 3 words and less 
       sentences.forEach(sentence => {
         const words = sentence.split(' ');
-           if(words.length > 3 && words.length < 12){
+           if(words.length > 3 && words.length < 7){
             const words = sentence.split(' ');
-            if(words.length > 3 && words.length < 12){
+            if(words.length > 3 && words.length < 7){
                   let totalTfIdfScore = 0;
       
                   words.forEach(token => {
