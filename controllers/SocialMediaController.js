@@ -27,6 +27,7 @@ function compareHashtags(a, b) {
     return bTotal - aTotal;
 }
 
+
 function tiktok_data(keyword, count, callback){
 
     unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/post')
@@ -40,6 +41,7 @@ function tiktok_data(keyword, count, callback){
         let data = {};
         let hashtags = [];
         let newArray = [];
+
 
         response.body.aweme_list.forEach( data => {
             let obj = { };
@@ -71,8 +73,9 @@ function tiktok_data(keyword, count, callback){
 
         let maxHashtags = uniqueHashtags.slice(0, count);
 
+        
         let completeHashtags = [];
-            
+
         //Get Hashtag View count
         maxHashtags.forEach((hashtag)=>{
             let cleanHashtag = hashtag.substring(1);
@@ -98,7 +101,7 @@ function tiktok_data(keyword, count, callback){
             });
         })
         
-        data.hashtags = completeHashtags.sort(compareHashtags);;
+        data.hashtags = completeHashtags.sort(compareHashtags);
         data.posts = newArray;
         callback(data);
     })
@@ -229,7 +232,7 @@ function instagram_data(keyword, count, callback){
     unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/search')
     .headers({
         'content-type': 'application/json',
-        'X-RapidAPI-Key': `${process.env.NEW_TITOK_KEY}`,
+        'X-RapidAPI-Key': `${process.env.NEW_INSTA_KEY}`,
         'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
     })
     .send(JSON.stringify({
@@ -269,11 +272,39 @@ function instagram_data(keyword, count, callback){
 
         let maxHashtags = uniqueHashtags.slice(0, count);
 
-        data.users = users;
-        data.hastags = maxHashtags;
+        let completeHashtags = [];
+
+        maxHashtags.forEach((hashtag)=>{
+            let cleanHashtag = hashtag.substring(1);
+
+                unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/hashtag/get_info')
+                .headers({
+                    'content-type': 'application/json',
+                    'X-RapidAPI-Key':  `${process.env.NEW_INSTA_KEY}`,
+                    'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
+                })
+                .send({
+                    name: cleanHashtag
+                })
+                .end( response => {
+            
+                    let view_count = response.body.response.body.count;
+
+                    let newTag = { }
+                    newTag.hashtag = hashtag;
+                    newTag.view_count = view_count;
+
+                    completeHashtags.push(newTag);
+                    
+                })
+            })
+
+            data.users = users;
+            data.hastags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
 
 
-        callback(data)
+            callback(data)
+            
     })
 }
 
