@@ -8,6 +8,16 @@ let urlEncoded = bodyParser.urlencoded({ extended: false});
 let unirest = require('unirest');
 const SocialMediaModel = require('../models/SocialMediaModel');
 
+// Sort Posts
+function comparePosts(a, b) {
+    // Handle null values by treating them as 0
+    const aTotal = (a.reactionsCount || 0) + (a.commentsCount || 0);
+    const bTotal = (b.reactionsCount || 0) + (b.commentsCount || 0);
+
+    // Sort in descending order
+    return bTotal - aTotal;
+}
+
 function tiktok_data(keyword, count, callback){
 
     //unirest('GET', 'https://scraptik.p.rapidapi.com/search-posts')
@@ -44,12 +54,14 @@ function tiktok_data(keyword, count, callback){
         const uniqueHashtags = [];
 
         for (const item of hashtags) {
-        if (!uniqueHashtags.includes(item)) {
-            uniqueHashtags.push(item);
+            if (!uniqueHashtags.includes(item) && item.length > 4) {
+                uniqueHashtags.push(item);
+            }
         }
-        }
+
+        let maxHashtags = uniqueHashtags.slice(0, count);
             
-        // Get Hashtag View and use_count
+        //Get Hashtag View and use_count
         // uniqueHashtags.forEach((hashtag)=>{
         //     let cleanHashtag = hashtag.substring(1);
         //     unirest('GET', 'https://scraptik.p.rapidapi.com/search-hashtags')
@@ -64,7 +76,7 @@ function tiktok_data(keyword, count, callback){
         //     });
         // })
         
-        data.hashtags = uniqueHashtags;
+        data.hashtags = maxHashtags;
         data.posts = newArray;
         callback(data);
     })
@@ -107,7 +119,7 @@ function linkedin_data(keyword, count, callback){
             })
     
             data.users = users;
-            data.posts = posts;
+            data.posts = posts.sort(comparePosts);
     
             callback(data);
         }else{
@@ -141,7 +153,7 @@ function linkedin_data(keyword, count, callback){
 }
 
 function twitter_data(keyword, count, callback){
-    //instagram
+
     unirest('GET', 'https://twitter-api45.p.rapidapi.com/search.php')
     .headers({
         'content-type': 'application/json',
@@ -179,8 +191,10 @@ function twitter_data(keyword, count, callback){
             }
         }
 
+        let maxHastags = uniqueHashtags.slice(0, count);
+
         let data = { };
-        data.hashtags = uniqueHashtags;
+        data.hashtags = maxHastags;
         data.posts = posts;
 
         callback(data);
@@ -231,8 +245,10 @@ function instagram_data(keyword, count, callback){
 
         let data = { };
 
+        let maxHashtags = uniqueHashtags.slice(0, count);
+
         data.users = users;
-        data.hastags = hashtags;
+        data.hastags = maxHashtags;
 
 
         callback(data)
