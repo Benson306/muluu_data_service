@@ -18,9 +18,17 @@ function comparePosts(a, b) {
     return bTotal - aTotal;
 }
 
+function compareHashtags(a, b) {
+    // Handle null values by treating them as 0
+    const aTotal = (a.use_count || 0) + (a.view_count || 0);
+    const bTotal = (b.use_count || 0) + (b.view_count || 0);
+
+    // Sort in descending order
+    return bTotal - aTotal;
+}
+
 function tiktok_data(keyword, count, callback){
 
-    //unirest('GET', 'https://scraptik.p.rapidapi.com/search-posts')
     unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/post')
     .headers({
         'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
@@ -54,29 +62,43 @@ function tiktok_data(keyword, count, callback){
         const uniqueHashtags = [];
 
         for (const item of hashtags) {
-            if (!uniqueHashtags.includes(item) && item.length > 4) {
-                uniqueHashtags.push(item);
+            if (!uniqueHashtags.includes(item) ) {
+                if(item.includes(keyword) && item.length > 4){
+                    uniqueHashtags.push(item);
+                }
             }
         }
 
         let maxHashtags = uniqueHashtags.slice(0, count);
+
+        let completeHashtags = [];
             
-        //Get Hashtag View and use_count
-        // uniqueHashtags.forEach((hashtag)=>{
-        //     let cleanHashtag = hashtag.substring(1);
-        //     unirest('GET', 'https://scraptik.p.rapidapi.com/search-hashtags')
-        //     .headers({
-        //         'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
-        //         'X-RapidAPI-Host': 'scraptik.p.rapidapi.com'
-        //     })
-        //     .query(`keyword=${cleanHashtag}`)
-        //     .query('count=1')
-        //     .end( response =>{
-        //         console.log(`${hashtag} - ${response.body.challenge_list}`);
-        //     });
-        // })
+        //Get Hashtag View count
+        maxHashtags.forEach((hashtag)=>{
+            let cleanHashtag = hashtag.substring(1);
+            unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/hashtag')
+            .headers({
+                'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
+                'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
+            })
+            .query(`keyword=${cleanHashtag}`)
+            .query('count=1')
+            .end( response =>{
+                let use_count = response.body.challenge_list[0].challenge_info.use_count;
+                let view_count = response.body.challenge_list[0].challenge_info.view_count;
+
+                let newHashtagData = { }
+                
+                newHashtagData.hashtag = hashtag;
+                newHashtagData.use_count = use_count;
+                newHashtagData.view_count = view_count;
+
+                completeHashtags.push(newHashtagData);
+
+            });
+        })
         
-        data.hashtags = maxHashtags;
+        data.hashtags = completeHashtags.sort(compareHashtags);;
         data.posts = newArray;
         callback(data);
     })
