@@ -34,33 +34,38 @@ function make_request(url, callback){
 app.post('/scrape', urlEncoded ,(req, res)=>{
 
   //Make request and receive date as a callback
-  make_request(req.body.url,(data)=>{
+  try{
+    make_request(req.body.url,(data)=>{
 
-    const domainName = new URL(req.body.url);
-    const jsonData = JSON.parse(data);
-
-    let savedData = {
-      page_link: req.body.url,
-      domain: domainName.hostname,
-      page_html: jsonData.result
-    }
-
-    PagesModel.find({page_link: req.body.url})
-    .then(data => {
-      if(data.length > 0){
-        res.json(savedData);
-      }else{
-        PagesModel(savedData).save()
-        .then(()=>{
-          //SitesModel.find({})
-          res.json(savedData);
-        })
+      const domainName = new URL(req.body.url);
+      const jsonData = JSON.parse(data);
+  
+      let savedData = {
+        page_link: req.body.url,
+        domain: domainName.hostname,
+        page_html: jsonData.result
       }
-    })
-
-    //res.send(savedData);
-
-  });
+  
+      PagesModel.find({page_link: req.body.url})
+      .then(data => {
+        if(data.length > 0){
+          res.status(200).json(savedData);
+        }else{
+          PagesModel(savedData).save()
+          .then(()=>{
+            //SitesModel.find({})
+            res.status(200).json(savedData);
+          })
+        }
+      })
+  
+  
+    });
+  }
+  catch(err){
+    res.json(500).json('Failed. Server Error');
+  }
+  
 
    
 })

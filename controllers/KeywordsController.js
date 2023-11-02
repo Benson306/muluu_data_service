@@ -66,9 +66,10 @@ app.get('/keyword/:word', urlEncoded, (req, res)=>{
 
     KeywordsModel(dbData).save()
     .then(()=>{
-      res.json(dbData);
+      res.status(200).json(dbData);
     })
     .catch(err => {
+      res.status(500).json('Error in sending Data to db');
       console.log('Error in sending Data to db');
     })
 
@@ -177,7 +178,10 @@ app.post('/keyword_opportunity', urlEncoded, (req, res)=>{
                 KeywordOpportunityModel(dbData).save()
                 .then((responseData)=>{
                   
-                  res.json(responseData);
+                  res.status(200).json(responseData);
+                })
+                .catch(err => {
+                  res.status(500).json('failed. server error');
                 })
                 
               }else{

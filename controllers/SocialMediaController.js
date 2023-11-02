@@ -322,26 +322,53 @@ app.post('/socials', urlEncoded, (req, res)=>{
     // Find if it has been queried recently
     SocialMediaModel.find({ keyword : keyword})
     .then(response =>{
-        if(response.length > 0){
-            let dataTimestamp = new Date(response[0].timestamp);
+    
+    try{  
+            if(response.length > 0){
+                let dataTimestamp = new Date(response[0].timestamp);
 
-            // Calculate the difference in months
-            let monthDifference = (dataTimestamp.getFullYear() - currentDate.getFullYear()) * 12 + (dataTimestamp.getMonth() - currentDate.getMonth());
+                // Calculate the difference in months
+                let monthDifference = (dataTimestamp.getFullYear() - currentDate.getFullYear()) * 12 + (dataTimestamp.getMonth() - currentDate.getMonth());
 
-            if(monthDifference < -2){
-                // Data is more than two months old
+                if(monthDifference < -2){
+                    // Data is more than two months old
+                    instagram_data(keyword, count, (insta_response)=>{
+                        data.instagram = insta_response;
+                        tiktok_data(keyword, count, (result)=>{
+                            data.tiktok = result;
+                            twitter_data(keyword, count, (x_response)=>{
+                                data.x = x_response;
+                                SocialMediaModel.findByIdAndDelete(response[0]._id)
+                                .then(()=>{
+                                    // Save to DB
+                                    SocialMediaModel(data).save()
+                                    .then(()=>{
+                                        res.status(200).json(data);
+                                    })
+                                })
+                                
+                            })
+                        })
+                        
+                    })
+
+                }else{
+                    res.status(200).json(response)
+                }
+            }else{
                 instagram_data(keyword, count, (insta_response)=>{
                     data.instagram = insta_response;
                     tiktok_data(keyword, count, (result)=>{
                         data.tiktok = result;
                         twitter_data(keyword, count, (x_response)=>{
                             data.x = x_response;
-                            SocialMediaModel.findByIdAndDelete(response[0]._id)
-                            .then(()=>{
+
+                            linkedin_data(keyword, count, (linked_response)=>{
+                                data.linkedIn = linked_response;
                                 // Save to DB
                                 SocialMediaModel(data).save()
                                 .then(()=>{
-                                    res.json(data);
+                                    res.status(200).json(data);
                                 })
                             })
                             
@@ -350,31 +377,11 @@ app.post('/socials', urlEncoded, (req, res)=>{
                     
                 })
 
-            }else{
-                res.json(response)
             }
-        }else{
-            instagram_data(keyword, count, (insta_response)=>{
-                data.instagram = insta_response;
-                tiktok_data(keyword, count, (result)=>{
-                    data.tiktok = result;
-                    twitter_data(keyword, count, (x_response)=>{
-                        data.x = x_response;
 
-                        linkedin_data(keyword, count, (linked_response)=>{
-                            data.linkedIn = linked_response;
-                            // Save to DB
-                            SocialMediaModel(data).save()
-                            .then(()=>{
-                                res.json(data);
-                            })
-                        })
-                        
-                    })
-                })
-                
-            })
-
+        }
+        catch(err){
+            res.status(500).json('Failed. Server Error');
         }
     })
 

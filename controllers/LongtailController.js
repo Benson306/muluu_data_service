@@ -171,9 +171,9 @@ app.get('/longtail/:keyword', (req, res)=>{
         })
 
 
-        res.json(nonDuplicates);
+        res.status(200).json(nonDuplicates);
       }else{
-        res.status(300).json(`No longtail keyword associated with ${req.params.keyword}.`);
+        res.status(404).json(`No longtail keyword associated with ${req.params.keyword}.`);
       }
       
       })
@@ -187,28 +187,3 @@ app.get('/longtail/:keyword', (req, res)=>{
 
 module.exports = app;
 
-// function run_longtail_scrapper(){
-//   PagesModel.find({})
-//   .then((data)=>{   
-//     data.forEach(dt =>{
-//       //Check if id exists in page_ids collection
-//       IdsModel.find({page_id: dt._id})
-//       .then((idsData)=>{
-
-//         if(idsData.length == 0){
-//           getLongtailFromScrappedDataInDb(dt.page_html);
-
-//           IdsModel({page_id: dt._id}).save()
-//           .then(()=>{
-//             console.log("Page Id saved");
-//           })
-//           .catch(()=>{
-//             console.log("Error In Saving page Id");
-//           })
-//         }
-//       })
-
-      
-//     })
-//   })
-// }
