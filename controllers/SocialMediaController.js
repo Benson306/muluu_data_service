@@ -205,9 +205,18 @@ function twitter_data(keyword, count, callback){
             obj.totalEngagements = tweet.replies + tweet.retweets + tweet.quotes + tweet.bookmarks + tweet.favorites
 
             let post_hashtags = tweet.text.match(/#\w+/g);
-            
+
             if (post_hashtags !== null) {
-                hashtags.push(...post_hashtags);
+
+                post_hashtags.map( htg => {
+
+                    let newPostHashtag = {
+                        htg,
+                        use_count: obj.totalEngagements
+                    }
+
+                    hashtags.push(newPostHashtag);
+                })
             }
 
             posts.push(obj);
@@ -225,8 +234,8 @@ function twitter_data(keyword, count, callback){
         let maxHastags = uniqueHashtags.slice(0, count);
 
         let data = { };
-        data.hashtags = maxHastags;
         data.posts = posts.sort((a, b) => b.totalEngagements - a.totalEngagements);
+        data.hashtags = maxHastags.sort((a, b) => b.use_count - a.use_count);
 
         callback(data);
 
@@ -306,7 +315,8 @@ function instagram_data(keyword, count, callback){
             })
 
             data.users = users;
-            data.hastags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
+            data.hashtags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
+            //data.hashtags = maxHashtags;
 
 
             callback(data)
