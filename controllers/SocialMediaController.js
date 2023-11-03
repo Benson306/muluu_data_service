@@ -197,6 +197,12 @@ function twitter_data(keyword, count, callback){
             obj.username = tweet.screen_name;
             obj.user_profile_pic = tweet.user_info.avatar;
             obj.post = tweet.text;
+            obj.replies = tweet.replies;
+            obj.retweets = tweet.retweets;
+            obj.quotes = tweet.quotes;
+            obj.bookmarks = tweet.bookmarks;
+            obj.favorites = tweet.favorites;
+            obj.totalEngagements = tweet.replies + tweet.retweets + tweet.quotes + tweet.bookmarks + tweet.favorites
 
             let post_hashtags = tweet.text.match(/#\w+/g);
             
@@ -220,7 +226,7 @@ function twitter_data(keyword, count, callback){
 
         let data = { };
         data.hashtags = maxHastags;
-        data.posts = posts;
+        data.posts = posts.sort((a, b) => b.totalEngagements - a.totalEngagements);
 
         callback(data);
 
