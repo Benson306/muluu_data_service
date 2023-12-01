@@ -178,7 +178,7 @@ app.get('/longtail/:keyword', (req, res)=>{
   }
   catch(error){
     console.log("Error retrieving data" + error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).json('Internal Server Error');
   }
      
 })

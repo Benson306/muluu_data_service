@@ -397,7 +397,7 @@ app.post('/socials', urlEncoded, (req, res)=>{
 
         }
         catch(err){
-            res.status(500).json('Failed. Server Error');
+            res.status(500).json('Rate Limit exceeded');
         }
     })
 
