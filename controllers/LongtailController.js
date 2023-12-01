@@ -143,8 +143,6 @@ function getCurrentTime(){
 
   // Format the components as HH:MM:SS
   const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-  console.log(formattedTime);
 }
 
 //Schedule the scrapper to check for changes after every 1 hour and scrape the longtail keywords from it.

@@ -287,36 +287,36 @@ function instagram_data(keyword, count, callback){
 
         let maxHashtags = uniqueHashtags.slice(0, count);
 
-        let completeHashtags = [];
+        // let completeHashtags = [];
 
-        maxHashtags.forEach((hashtag)=>{
-            let cleanHashtag = hashtag.substring(1);
+        // maxHashtags.forEach((hashtag)=>{
+        //     let cleanHashtag = hashtag.substring(1);
 
-                unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/hashtag/get_info')
-                .headers({
-                    'content-type': 'application/json',
-                    'X-RapidAPI-Key':  `${process.env.NEW_INSTA_KEY}`,
-                    'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
-                })
-                .send({
-                    name: cleanHashtag
-                })
-                .end( response => {
+        //         unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/hashtag/get_info')
+        //         .headers({
+        //             'content-type': 'application/json',
+        //             'X-RapidAPI-Key':  `${process.env.NEW_INSTA_KEY}`,
+        //             'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
+        //         })
+        //         .send({
+        //             name: cleanHashtag
+        //         })
+        //         .end( response => {
             
-                    let view_count = response.body.response.body.count;
+        //             let view_count = response.body.response.body.count;
 
-                    let newTag = { }
-                    newTag.hashtag = hashtag;
-                    newTag.view_count = view_count;
+        //             let newTag = { }
+        //             newTag.hashtag = hashtag;
+        //             newTag.view_count = view_count;
 
-                    completeHashtags.push(newTag);
+        //             completeHashtags.push(newTag);
                     
-                })
-            })
+        //         })
+        //     })
 
             data.users = users;
-            data.hashtags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
-            //data.hashtags = maxHashtags;
+            //data.hashtags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
+            data.hashtags = maxHashtags;
 
 
             callback(data)

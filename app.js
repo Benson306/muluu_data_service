@@ -6,6 +6,10 @@ require('dotenv').config();
 
 app.use(express.json());
 
+let cors = require('cors')
+ 
+app.use(cors())
+
 let mongoose = require('mongoose');
 
 //Connect to mongoDb using mongoose library
