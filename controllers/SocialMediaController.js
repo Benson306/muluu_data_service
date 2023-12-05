@@ -74,34 +74,35 @@ function tiktok_data(keyword, count, callback){
         let maxHashtags = uniqueHashtags.slice(0, count);
 
         
-        let completeHashtags = [];
+        // let completeHashtags = [];
 
-        //Get Hashtag View count
-        maxHashtags.forEach((hashtag)=>{
-            let cleanHashtag = hashtag.substring(1);
-            unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/hashtag')
-            .headers({
-                'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
-                'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
-            })
-            .query(`keyword=${cleanHashtag}`)
-            .query('count=1')
-            .end( response =>{
-                let use_count = response.body.challenge_list[0].challenge_info.use_count;
-                let view_count = response.body.challenge_list[0].challenge_info.view_count;
+        // //Get Hashtag View count
+        // maxHashtags.forEach((hashtag)=>{
+        //     let cleanHashtag = hashtag.substring(1);
+        //     unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/hashtag')
+        //     .headers({
+        //         'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
+        //         'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
+        //     })
+        //     .query(`keyword=${cleanHashtag}`)
+        //     .query('count=1')
+        //     .end( response =>{
+        //         let use_count = response.body.challenge_list[0].challenge_info.use_count;
+        //         let view_count = response.body.challenge_list[0].challenge_info.view_count;
 
-                let newHashtagData = { }
+        //         let newHashtagData = { }
                 
-                newHashtagData.hashtag = hashtag;
-                newHashtagData.use_count = use_count;
-                newHashtagData.view_count = view_count;
+        //         newHashtagData.hashtag = hashtag;
+        //         newHashtagData.use_count = use_count;
+        //         newHashtagData.view_count = view_count;
 
-                completeHashtags.push(newHashtagData);
+        //         completeHashtags.push(newHashtagData);
 
-            });
-        })
+        //     });
+        // })
         
-        data.hashtags = completeHashtags.sort(compareHashtags);
+        //data.hashtags = completeHashtags.sort(compareHashtags);
+        data.hashtags = maxHashtags;
         data.posts = newArray;
         callback(data);
     })
@@ -405,5 +406,19 @@ app.post('/socials', urlEncoded, (req, res)=>{
 
 
 })
+
+app.get('/get-image/:url', async (req, res) => {
+    try {
+      const imageUrl = req.params.url;
+      
+      const response = await fetch(imageUrl);
+      const imageBuffer = await response.buffer();
+  
+      res.set('Content-Type', 'image/jpeg');
+      res.send(imageBuffer);
+    } catch (error) {
+      res.status(500).send('Error fetching image');
+    }
+  });
 
 module.exports = app;
