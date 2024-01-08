@@ -326,7 +326,7 @@ function instagram_data(keyword, count, callback){
 }
 
 app.post('/socials', urlEncoded, (req, res)=>{
-    let keyword = req.body.keyword;
+    let keyword = req.body.keyword.toLowerCase();
     let count = req.body.count;
     let data = {};
 
