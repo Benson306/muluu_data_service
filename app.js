@@ -32,6 +32,9 @@ app.use('/', industryController);
 let socialsController = require('./controllers/SocialMediaController');
 app.use('/', socialsController);
 
+let newSocialsController = require('./controllers/NewSocialMediaController');
+app.use('/', newSocialsController)
+
 let port = 3000;
 
 app.listen(port, ()=>{
