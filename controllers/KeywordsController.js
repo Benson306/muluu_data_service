@@ -19,7 +19,7 @@ const KeywordOpportunityModel = require('../models/KeywordsOpportunityModel');
 const stopwords = require('natural').stopwords;
 
 //Make request to serper
-function make_request(keyword, callback){
+function make_request(keyword, country, callback){
 
     unirest('POST', `https://google.serper.dev/search`)
     .headers({
@@ -28,7 +28,7 @@ function make_request(keyword, callback){
     })
     .send(JSON.stringify({
       "q": `${keyword}`,
-      "gl": "ke"
+      "gl": `${country}`
     }))
     .end((response) => { 
       if (response.error) throw new Error(response.error); 
@@ -49,33 +49,41 @@ function getFormattedDate() {
   return day + month + year;
 }
 
-app.get('/keyword/:word', urlEncoded, (req, res)=>{
+app.get('/keyword/:word/:country', urlEncoded, (req, res)=>{
 
   const formattedDate = getFormattedDate();
 
   const keyword =  req.params.word;
+  const country = req.params.country;
 
-  //Make request and receive date as a callback
-  make_request(keyword,(data)=>{
+  KeywordsModel.find({$and: [{keyword: keyword},{country: country}]})
+  .then(data => {
+    if(data.length > 1){
+      res.json(data[0]);
+    }else{
+      //Make request and receive date as a callback
+      make_request(keyword, country, (data)=>{
 
-    let dbData = {
-      keyword: keyword,
-      timestamp: formattedDate,
-      result: JSON.parse(data)
+        let dbData = {
+          keyword: keyword,
+          country: country,
+          timestamp: formattedDate,
+          result: JSON.parse(data)
+        }
+
+        KeywordsModel(dbData).save()
+        .then(()=>{
+          res.status(200).json(dbData);
+        })
+        .catch(err => {
+          res.status(500).json('Error in sending Data to db');
+          console.log('Error in sending Data to db');
+        })
+
+      });
     }
+  })
 
-    KeywordsModel(dbData).save()
-    .then(()=>{
-      res.status(200).json(dbData);
-    })
-    .catch(err => {
-      res.status(500).json('Error in sending Data to db');
-      console.log('Error in sending Data to db');
-    })
-
-  });
-
-   
 })
 
 
