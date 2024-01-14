@@ -32,7 +32,7 @@ function tiktok_data(keyword, count, callback){
 
     unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/post')
     .headers({
-        'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
+        'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
         'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
     })
     .query(`keyword=${keyword}`)
@@ -81,7 +81,7 @@ function tiktok_data(keyword, count, callback){
         //     let cleanHashtag = hashtag.substring(1);
         //     unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/hashtag')
         //     .headers({
-        //         'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
+        //         'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
         //         'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
         //     })
         //     .query(`keyword=${cleanHashtag}`)
@@ -112,7 +112,7 @@ function tiktok_data(keyword, count, callback){
 function linkedin_data(keyword, count, callback){
     unirest('GET', 'https://linkedin-public-search.p.rapidapi.com/postsearch')
     .headers({
-        'X-RapidAPI-Key':  `${process.env.NEW_TITOK_KEY}`,
+        'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
         'X-RapidAPI-Host': 'linkedin-public-search.p.rapidapi.com'
     })
     .query(`keyword=${keyword}`)
@@ -183,7 +183,7 @@ function twitter_data(keyword, count, callback){
     unirest('GET', 'https://twitter-api45.p.rapidapi.com/search.php')
     .headers({
         'content-type': 'application/json',
-        'X-RapidAPI-Key':  `${process.env.TWITTER_V2_API_KEY}`,
+        'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
         'X-RapidAPI-Host': 'twitter-api45.p.rapidapi.com'
     })
     .query(`query=${keyword}`)
@@ -248,7 +248,7 @@ function instagram_data(keyword, count, callback){
     unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/search')
     .headers({
         'content-type': 'application/json',
-        'X-RapidAPI-Key': `${process.env.NEW_INSTA_KEY}`,
+        'X-RapidAPI-Key': `${process.env.NEW_KEY}`,
         'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
     })
     .send(JSON.stringify({
@@ -296,7 +296,7 @@ function instagram_data(keyword, count, callback){
         //         unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/hashtag/get_info')
         //         .headers({
         //             'content-type': 'application/json',
-        //             'X-RapidAPI-Key':  `${process.env.NEW_INSTA_KEY}`,
+        //             'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
         //             'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
         //         })
         //         .send({
@@ -327,7 +327,7 @@ function instagram_data(keyword, count, callback){
 
 app.post('/socials', urlEncoded, (req, res)=>{
     let keyword = req.body.keyword.toLowerCase();
-    let count = req.body.count;
+    let count = 5;
     let data = {};
 
     let currentDate  = new Date();

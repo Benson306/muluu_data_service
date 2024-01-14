@@ -11,6 +11,10 @@ let cron = require('node-cron');
 const PagesModel = require('../models/PagesModel');
 const IdsModel = require('../models/IdsModel');
 
+const bodyParser = require('body-parser');
+
+const urlEncoded = bodyParser.urlencoded({ extended: false })
+
 //Scheduled longtail scrapper
 function getLongtailFromScrappedDataInDb(scrapedData){
       // Initialize TF-IDF instance
@@ -152,9 +156,11 @@ let scheduled = cron.schedule('0 */6 * * *', () => {
 
 scheduled.start();
 
-app.get('/longtail/:keyword', (req, res)=>{
+app.post('/longtail', urlEncoded, (req, res)=>{
+  let longtail_keyword = req.body.keyword;
+  
   try{
-    LongtailModel.find({ longtail_keyword: { $regex : req.params.keyword, $options: 'i'}})
+    LongtailModel.find({ longtail_keyword: { $regex : longtail_keyword, $options: 'i'}})
     .then((data)=>{
       if(data.length > 0){
         let sortedData = data.sort((a,b) => b.score - a.score)
@@ -171,7 +177,7 @@ app.get('/longtail/:keyword', (req, res)=>{
 
         res.status(200).json(nonDuplicates);
       }else{
-        res.status(404).json(`No longtail keyword associated with ${req.params.keyword}.`);
+        res.status(404).json(`No longtail keyword associated with ${longtail_keyword}.`);
       }
       
       })

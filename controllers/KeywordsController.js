@@ -49,12 +49,12 @@ function getFormattedDate() {
   return day + month + year;
 }
 
-app.get('/keyword/:word/:country', urlEncoded, (req, res)=>{
+app.post('/keyword', urlEncoded, (req, res)=>{
 
   const formattedDate = getFormattedDate();
 
-  const keyword =  req.params.word;
-  const country = req.params.country;
+  const keyword =  req.body.keyword;
+  const country = req.body.country;
 
   KeywordsModel.find({$and: [{keyword: keyword},{country: country}]})
   .then(data => {
