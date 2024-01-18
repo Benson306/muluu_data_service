@@ -355,14 +355,17 @@ app.post('/socials', urlEncoded, (req, res)=>{
                             data.tiktok = result;
                             twitter_data(keyword, count, (x_response)=>{
                                 data.x = x_response;
-                                SocialMediaModel.findByIdAndDelete(response[0]._id)
-                                .then(()=>{
-                                    // Save to DB
-                                    SocialMediaModel(data).save()
-                                    .then(()=>{
-                                        res.status(200).json(data);
-                                    })
-                                })
+                                //linkedin_data(keyword, count, (linked_response)=>{
+                                    //data.linkedIn = linked_response;
+                                        SocialMediaModel.findByIdAndDelete(response[0]._id)
+                                        .then(()=>{
+                                            // Save to DB
+                                            SocialMediaModel(data).save()
+                                            .then(()=>{
+                                                res.status(200).json(data);
+                                            })
+                                        })
+                                //})
                                 
                             })
                         })
@@ -380,14 +383,14 @@ app.post('/socials', urlEncoded, (req, res)=>{
                         twitter_data(keyword, count, (x_response)=>{
                             data.x = x_response;
 
-                            linkedin_data(keyword, count, (linked_response)=>{
-                                data.linkedIn = linked_response;
+                            //linkedin_data(keyword, count, (linked_response)=>{
+                                //data.linkedIn = linked_response;
                                 // Save to DB
                                 SocialMediaModel(data).save()
                                 .then(()=>{
                                     res.status(200).json(data);
                                 })
-                            })
+                            //})
                             
                         })
                     })
