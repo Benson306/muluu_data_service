@@ -38,6 +38,9 @@ app.use('/', newSocialsController);
 let KeywordCompetitionController = require('./controllers/KeywordCompetitionController');
 app.use('/', KeywordCompetitionController);
 
+let DomainController = require('./controllers/DomainController');
+app.use('/', DomainController);
+
 let port = 3000;
 
 app.listen(port, ()=>{
