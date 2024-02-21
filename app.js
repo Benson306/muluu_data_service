@@ -33,7 +33,10 @@ let socialsController = require('./controllers/SocialMediaController');
 app.use('/', socialsController);
 
 let newSocialsController = require('./controllers/NewSocialMediaController');
-app.use('/', newSocialsController)
+app.use('/', newSocialsController);
+
+let KeywordCompetitionController = require('./controllers/KeywordCompetitionController');
+app.use('/', KeywordCompetitionController);
 
 let port = 3000;
 
