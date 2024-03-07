@@ -28,7 +28,8 @@ app.post('/keyword_volume', urlEncoded, async (req, res)=>{
 
         //let request = unirest("POST", )
 
-        res.json(token);
+        //res.json(token);
+        res.status(500).json({ error: 'Failed to retrieve API token' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to retrieve API token' });
     }
