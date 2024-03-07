@@ -21,7 +21,7 @@ app.post('/keyword_competition', urlEncoded, (req, res)=>{
                 country: country,
             });
             request.headers({
-                'X-RapidAPI-Key': `${process.env.NEW_KEY}`,
+                'X-RapidAPI-Key': `${process.env.RAPID_API_KEY}`,
                 'X-RapidAPI-Host': 'seo-keyword-research.p.rapidapi.com'
             });
             request.end(function (response) {

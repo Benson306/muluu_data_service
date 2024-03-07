@@ -23,7 +23,7 @@ function make_request(keyword, country, callback){
 
     unirest('POST', `https://google.serper.dev/search`)
     .headers({
-      'X-API-KEY': process.env.API_KEY,
+      'X-API-KEY': process.env.SERPER_KEY,
       'Content-Type': 'application/json'
     })
     .send(JSON.stringify({

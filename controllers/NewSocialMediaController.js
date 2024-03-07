@@ -42,7 +42,7 @@ app.post('/new_socials', urlEncoded, (req, res)=>{
                     trackTotal: 'true'
                 });
                 request.headers({
-                    'X-RapidAPI-Key': `${process.env.NEW_KEY}`,
+                    'X-RapidAPI-Key': `${process.env.RAPID_API_KEY}`,
                     'X-RapidAPI-Host': 'instagram-statistics-api.p.rapidapi.com'
                 });
                 request.end(function (response) {
@@ -84,7 +84,7 @@ app.post('/new_socials', urlEncoded, (req, res)=>{
                     trackTotal: 'true'
                 });
                 request.headers({
-                    'X-RapidAPI-Key': `${process.env.TWITTER_V2_API_KEY}`,
+                    'X-RapidAPI-Key': `${process.env.RAPID_API_KEY}`,
                     'X-RapidAPI-Host': 'instagram-statistics-api.p.rapidapi.com'
                 });
                 request.end(function (response) {

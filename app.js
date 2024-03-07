@@ -41,6 +41,9 @@ app.use('/', KeywordCompetitionController);
 let DomainController = require('./controllers/DomainController');
 app.use('/', DomainController);
 
+let KeywordVolumeController = require('./controllers/KeywordVolumeController');
+app.use('/', KeywordVolumeController);
+
 let port = 3000;
 
 app.listen(port, ()=>{

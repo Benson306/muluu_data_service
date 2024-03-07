@@ -66,8 +66,6 @@ app.post('/scrape', urlEncoded ,(req, res)=>{
     res.json(500).json('Failed. Server Error');
   }
   
-
-   
 })
 
 module.exports = app;

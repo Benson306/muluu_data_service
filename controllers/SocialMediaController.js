@@ -32,7 +32,7 @@ function tiktok_data(keyword, count, callback){
 
     unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/post')
     .headers({
-        'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
+        'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
         'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
     })
     .query(`keyword=${keyword}`)
@@ -72,37 +72,36 @@ function tiktok_data(keyword, count, callback){
         }
 
         let maxHashtags = uniqueHashtags.slice(0, count);
-
         
-        // let completeHashtags = [];
+        let completeHashtags = [];
 
-        // //Get Hashtag View count
-        // maxHashtags.forEach((hashtag)=>{
-        //     let cleanHashtag = hashtag.substring(1);
-        //     unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/hashtag')
-        //     .headers({
-        //         'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
-        //         'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
-        //     })
-        //     .query(`keyword=${cleanHashtag}`)
-        //     .query('count=1')
-        //     .end( response =>{
-        //         let use_count = response.body.challenge_list[0].challenge_info.use_count;
-        //         let view_count = response.body.challenge_list[0].challenge_info.view_count;
+        //Get Hashtag View count
+        maxHashtags.forEach((hashtag)=>{
+            let cleanHashtag = hashtag.substring(1);
+            unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/hashtag')
+            .headers({
+                'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
+                'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
+            })
+            .query(`keyword=${cleanHashtag}`)
+            .query('count=1')
+            .end( response =>{
+                let use_count = response.body.challenge_list[0].challenge_info.use_count;
+                let view_count = response.body.challenge_list[0].challenge_info.view_count;
 
-        //         let newHashtagData = { }
+                let newHashtagData = { }
                 
-        //         newHashtagData.hashtag = hashtag;
-        //         newHashtagData.use_count = use_count;
-        //         newHashtagData.view_count = view_count;
+                newHashtagData.hashtag = hashtag;
+                newHashtagData.use_count = use_count;
+                newHashtagData.view_count = view_count;
 
-        //         completeHashtags.push(newHashtagData);
+                completeHashtags.push(newHashtagData);
 
-        //     });
-        // })
+            });
+        })
         
-        //data.hashtags = completeHashtags.sort(compareHashtags);
-        data.hashtags = maxHashtags;
+        data.hashtags = completeHashtags.sort(compareHashtags);
+        //data.hashtags = maxHashtags;
         data.posts = newArray;
         callback(data);
     })
@@ -112,7 +111,7 @@ function tiktok_data(keyword, count, callback){
 function linkedin_data(keyword, count, callback){
     unirest('GET', 'https://linkedin-public-search.p.rapidapi.com/postsearch')
     .headers({
-        'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
+        'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
         'X-RapidAPI-Host': 'linkedin-public-search.p.rapidapi.com'
     })
     .query(`keyword=${keyword}`)
@@ -183,7 +182,7 @@ function twitter_data(keyword, count, callback){
     unirest('GET', 'https://twitter-api45.p.rapidapi.com/search.php')
     .headers({
         'content-type': 'application/json',
-        'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
+        'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
         'X-RapidAPI-Host': 'twitter-api45.p.rapidapi.com'
     })
     .query(`query=${keyword}`)
@@ -248,7 +247,7 @@ function instagram_data(keyword, count, callback){
     unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/search')
     .headers({
         'content-type': 'application/json',
-        'X-RapidAPI-Key': `${process.env.NEW_KEY}`,
+        'X-RapidAPI-Key': `${process.env.RAPID_API_KEY}`,
         'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
     })
     .send(JSON.stringify({
@@ -288,35 +287,35 @@ function instagram_data(keyword, count, callback){
 
         let maxHashtags = uniqueHashtags.slice(0, count);
 
-        // let completeHashtags = [];
+        let completeHashtags = [];
 
-        // maxHashtags.forEach((hashtag)=>{
-        //     let cleanHashtag = hashtag.substring(1);
+        maxHashtags.forEach((hashtag)=>{
+            let cleanHashtag = hashtag.substring(1);
 
-        //         unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/hashtag/get_info')
-        //         .headers({
-        //             'content-type': 'application/json',
-        //             'X-RapidAPI-Key':  `${process.env.NEW_KEY}`,
-        //             'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
-        //         })
-        //         .send({
-        //             name: cleanHashtag
-        //         })
-        //         .end( response => {
+                unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/hashtag/get_info')
+                .headers({
+                    'content-type': 'application/json',
+                    'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
+                    'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
+                })
+                .send({
+                    name: cleanHashtag
+                })
+                .end( response => {
             
-        //             let view_count = response.body.response.body.count;
+                    let view_count = response.body.response.body.count;
 
-        //             let newTag = { }
-        //             newTag.hashtag = hashtag;
-        //             newTag.view_count = view_count;
+                    let newTag = { }
+                    newTag.hashtag = hashtag;
+                    newTag.view_count = view_count;
 
-        //             completeHashtags.push(newTag);
+                    completeHashtags.push(newTag);
                     
-        //         })
-        //     })
+                })
+            })
 
-            data.users = users;
-            //data.hashtags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
+            //data.users = users;
+            data.hashtags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
             data.hashtags = maxHashtags;
 
 
@@ -383,14 +382,14 @@ app.post('/socials', urlEncoded, (req, res)=>{
                         twitter_data(keyword, count, (x_response)=>{
                             data.x = x_response;
 
-                            //linkedin_data(keyword, count, (linked_response)=>{
-                                //data.linkedIn = linked_response;
+                            linkedin_data(keyword, count, (linked_response)=>{
+                                data.linkedIn = linked_response;
                                 // Save to DB
                                 SocialMediaModel(data).save()
                                 .then(()=>{
                                     res.status(200).json(data);
                                 })
-                            //})
+                            })
                             
                         })
                     })

@@ -19,7 +19,7 @@ app.post('/keywords_ranking_in_domain', urlEncoded, (req, res)=>{
                 domain: domain,
             });
             request.headers({
-                'X-RapidAPI-Key': `${process.env.NEW_KEY}`,
+                'X-RapidAPI-Key': `${process.env.RAPID_API_KEY}`,
                 'X-RapidAPI-Host': 'seo-website-ranking-keywords.p.rapidapi.com'
             });
             request.end(function (response) {
@@ -61,7 +61,7 @@ app.post('/backlinks', urlEncoded, (req, res)=>{
                 domain: domain,
             });
             request.headers({
-                'X-RapidAPI-Key': `${process.env.TWITTER_V2_API_KEY}`,
+                'X-RapidAPI-Key': `${process.env.RAPID_API_KEY}`,
                 'X-RapidAPI-Host': 'seo-api-get-backlinks.p.rapidapi.com'
             });
             request.end(function (response) {
