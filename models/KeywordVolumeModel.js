@@ -1,7 +1,7 @@
 let mongoose = require('mongoose');
 
-let BacklinksSchema = new mongoose.Schema({}, {strict: false});
+let KeywordVolumeSchema = new mongoose.Schema({}, {strict: false});
 
-let BacklinksModel = mongoose.model('keyword_volume', BacklinksSchema);
+let KeywordVolumeModel = mongoose.model('keyword_volume', KeywordVolumeSchema);
 
-module.exports = BacklinksModel;
+module.exports = KeywordVolumeModel;
