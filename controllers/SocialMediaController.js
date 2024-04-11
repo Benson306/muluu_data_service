@@ -39,7 +39,7 @@ function tiktok_data(keyword, count, callback){
     .query(`keyword=${keyword}`)
     .query(`count=${count}`)
     .end( response =>{
-        if(!response.body.message){
+        if(!response.error){
             let data = {};
             let hashtags = [];
             let newArray = [];
@@ -176,44 +176,48 @@ function twitter_data(keyword, count, callback){
     })
     .query(`query=${keyword}`)
     .end(response => {
-        let hashtags = [];
-        let posts = [];
-        let tweets = response.body.timeline.slice(0, count);
-        tweets.forEach(tweet =>{
-            let obj  = { }
-            obj.username = tweet.screen_name;
-            obj.user_profile_pic = tweet.user_info.avatar;
-            obj.post = tweet.text;
-            obj.replies = tweet.replies;
-            obj.retweets = tweet.retweets;
-            obj.quotes = tweet.quotes;
-            obj.bookmarks = tweet.bookmarks;
-            obj.favorites = tweet.favorites;
-            obj.totalEngagements = tweet.replies + tweet.retweets + tweet.quotes + tweet.bookmarks + tweet.favorites
-            let post_hashtags = tweet.text.match(/#\w+/g);
-            if (post_hashtags !== null) {
-                post_hashtags.map( htg => {
-                    let newPostHashtag = {
-                        htg,
-                        use_count: obj.totalEngagements
-                    }
-                    hashtags.push(newPostHashtag);
-                })
+        if(!response.error){
+            let hashtags = [];
+            let posts = [];
+            let tweets = response.body.timeline.slice(0, count);
+            tweets.forEach(tweet =>{
+                let obj  = { }
+                obj.username = tweet.screen_name;
+                obj.user_profile_pic = tweet.user_info.avatar;
+                obj.post = tweet.text;
+                obj.replies = tweet.replies;
+                obj.retweets = tweet.retweets;
+                obj.quotes = tweet.quotes;
+                obj.bookmarks = tweet.bookmarks;
+                obj.favorites = tweet.favorites;
+                obj.totalEngagements = tweet.replies + tweet.retweets + tweet.quotes + tweet.bookmarks + tweet.favorites
+                let post_hashtags = tweet.text.match(/#\w+/g);
+                if (post_hashtags !== null) {
+                    post_hashtags.map( htg => {
+                        let newPostHashtag = {
+                            htg,
+                            use_count: obj.totalEngagements
+                        }
+                        hashtags.push(newPostHashtag);
+                    })
+                }
+                posts.push(obj);
+            })
+            const uniqueHashtags = [];
+            for (const item of hashtags) {
+                if (!uniqueHashtags.includes(item)) {
+                    uniqueHashtags.push(item);
+                }
             }
-            posts.push(obj);
-        })
-        const uniqueHashtags = [];
-        for (const item of hashtags) {
-            if (!uniqueHashtags.includes(item)) {
-                uniqueHashtags.push(item);
-            }
+            let maxHastags = uniqueHashtags.slice(0, count);
+    
+            let data = { };
+            data.posts = posts.sort((a, b) => b.totalEngagements - a.totalEngagements);
+            data.hashtags = maxHastags.sort((a, b) => b.use_count - a.use_count);
+            callback(data, false);
+        }else{
+            callback(`Failed to fetch data: ${response.body.message}`, true)
         }
-        let maxHastags = uniqueHashtags.slice(0, count);
-
-        let data = { };
-        data.posts = posts.sort((a, b) => b.totalEngagements - a.totalEngagements);
-        data.hashtags = maxHastags.sort((a, b) => b.use_count - a.use_count);
-        callback(data);
     })
 }
 
@@ -238,28 +242,34 @@ app.post("/twitter_social", urlEncoded, (req, res)=>{
 
                 if(monthDifference < -2){
 
-                    twitter_data(keyword, count, (result)=>{
-                        data.result = result;
-
-                        TwitterModel.findByIdAndDelete({ _id: response._id})
-                        .then(()=>{
-                            TwitterModel(data).save()
+                    twitter_data(keyword, count, (result, err)=>{
+                        if(!err){
+                            data.result = result;
+                            TwitterModel.findByIdAndDelete({ _id: response._id})
                             .then(()=>{
-                                res.status(200).json(data);
+                                TwitterModel(data).save()
+                                .then(()=>{
+                                    res.status(200).json(data);
+                                })
                             })
-                        })
+                        }else{
+                            res.status(500).json(result)
+                        }
                     }) 
                 }else{
                     res.status(200).json(response)
                 }
             }else{
-                twitter_data(keyword, count, (result)=>{
-                    data.result = result;
-
-                    TwitterModel(data).save()
-                    .then(()=>{
-                        res.status(200).json(data);
-                    })
+                twitter_data(keyword, count, (result, err)=>{
+                    if(!err){
+                        data.result = result;
+                        TwitterModel(data).save()
+                        .then(()=>{
+                            res.status(200).json(data);
+                        })
+                    }else{
+                        res.status(500).json(result)
+                    }
                 })
             }
         }
