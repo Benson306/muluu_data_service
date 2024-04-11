@@ -26,26 +26,26 @@ app.post('/keyword_competition', urlEncoded, (req, res)=>{
             });
             request.end(function (response) {
                 if (response.error){
-                    console.log(response.error)
+                    console.log(response.body)
                     res.status(400).json('Failed');
-                }
-
-                results.keyword = keyword;                   
-                results.country = country;
-                if(response.body.length > 5){
-                    results.result = response.body.slice(0 , 11);
+                    return;
                 }else{
-                    results.result = response.body;
+                    results.keyword = keyword;                   
+                    results.country = country;
+                    if(response.body.length > 5){
+                        results.result = response.body.slice(0 , 11);
+                    }else{
+                        results.result = response.body;
+                    }
+    
+                    KeywordsCompetitionModel(results).save()
+                    .then(newData => {
+                        res.json(newData);
+                    })
+                    .catch(err => {
+                        res.status(400).json('failed');
+                    })
                 }
-
-                KeywordsCompetitionModel(results).save()
-                .then(newData => {
-                    res.json(newData);
-                })
-                .catch(err => {
-                    res.status(400).json('failed');
-                })
-
             });
         }
     })

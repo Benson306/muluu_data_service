@@ -39,67 +39,70 @@ function tiktok_data(keyword, count, callback){
     .query(`keyword=${keyword}`)
     .query(`count=${count}`)
     .end( response =>{
-        let data = {};
-        let hashtags = [];
-        let newArray = [];
-        response.body.search_item_list.forEach( data => {
-            let obj = { };
-            obj.url = data.aweme_info.share_url;
-            obj.post = data.aweme_info.search_desc;
-            obj.username = data.aweme_info.author.nickname;
-            obj.user_id = data.aweme_info.author.uid;
-            let post_hashtags = data.aweme_info.desc.match(/#\w+/g);
-            if (post_hashtags !== null) {
-                hashtags.push(...post_hashtags);
-            }
-            newArray.push(obj)
-        })
-        const uniqueHashtags = [];
-        for (const item of hashtags) {
-            if (!uniqueHashtags.includes(item) ) {
-                if(item.includes(keyword) && item.length > 4){
-                    uniqueHashtags.push(item);
+        if(!response.body.message){
+            let data = {};
+            let hashtags = [];
+            let newArray = [];
+            response.body.search_item_list.forEach( data => {
+                let obj = { };
+                obj.url = data.aweme_info.share_url;
+                obj.post = data.aweme_info.search_desc;
+                obj.username = data.aweme_info.author.nickname;
+                obj.user_id = data.aweme_info.author.uid;
+                let post_hashtags = data.aweme_info.desc.match(/#\w+/g);
+                if (post_hashtags !== null) {
+                    hashtags.push(...post_hashtags);
+                }
+                newArray.push(obj)
+            })
+            const uniqueHashtags = [];
+            for (const item of hashtags) {
+                if (!uniqueHashtags.includes(item) ) {
+                    if(item.includes(keyword) && item.length > 4){
+                        uniqueHashtags.push(item);
+                    }
                 }
             }
-        }
-        let maxHashtags = uniqueHashtags.slice(0, count);
-        let completeHashtags = [];
-        let promises = [];
-        //Get Hashtag View count
-        maxHashtags.forEach((hashtag)=>{
-            let cleanHashtag = hashtag.substring(1);
-            let promise = new Promise((resolve, reject) => {
-                unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/hashtag')
-                .headers({
-                    'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
-                    'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
+            let maxHashtags = uniqueHashtags.slice(0, count);
+            let completeHashtags = [];
+            let promises = [];
+            //Get Hashtag View count
+            maxHashtags.forEach((hashtag)=>{
+                let cleanHashtag = hashtag.substring(1);
+                let promise = new Promise((resolve, reject) => {
+                    unirest('GET', 'https://tokapi-mobile-version.p.rapidapi.com/v1/search/hashtag')
+                    .headers({
+                        'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
+                        'X-RapidAPI-Host': 'tokapi-mobile-version.p.rapidapi.com'
+                    })
+                    .query(`keyword=${cleanHashtag}`)
+                    .query('count=1')
+                    .end( response =>{
+                        let use_count = response.body.challenge_list[0].challenge_info.use_count;
+                        let view_count = response.body.challenge_list[0].challenge_info.view_count;
+                        let newHashtagData = { }
+                        newHashtagData.hashtag = hashtag;
+                        newHashtagData.use_count = use_count;
+                        newHashtagData.view_count = view_count;
+                        completeHashtags.push(newHashtagData);
+                        resolve();
+                    });
                 })
-                .query(`keyword=${cleanHashtag}`)
-                .query('count=1')
-                .end( response =>{
-                    let use_count = response.body.challenge_list[0].challenge_info.use_count;
-                    let view_count = response.body.challenge_list[0].challenge_info.view_count;
-                    let newHashtagData = { }
-                    newHashtagData.hashtag = hashtag;
-                    newHashtagData.use_count = use_count;
-                    newHashtagData.view_count = view_count;
-                    completeHashtags.push(newHashtagData);
-                    resolve();
-                });
+                promises.push(promise)
             })
-            promises.push(promise)
-        })
-
-        Promise.all(promises)
-        .then(() => {
-            data.hashtags = completeHashtags.sort(compareHashtags);
-            data.posts = newArray;
-            callback(data);
-        })
-        .catch((error) => {
-            console.error("Error fetching hashtag data:", error);
-        });
-        
+    
+            Promise.all(promises)
+            .then(() => {
+                data.hashtags = completeHashtags.sort(compareHashtags);
+                data.posts = newArray;
+                callback(data, false);
+            })
+            .catch((error) => {
+                console.error("Error fetching hashtag data:", error);
+            });
+        }else{
+            callback(`Failed to fetch: ${response.body.message}`, true)
+        }
         
     })
 
@@ -114,40 +117,46 @@ app.post("/tiktok_social", urlEncoded, (req, res)=>{
     data.timestamp = currentDate;
 
     // Find if it has been queried recently
-    TiktokModel.find({ keyword : keyword})
+    TiktokModel.findOne({ keyword : keyword})
     .then(response =>{
     
         try{  
-            if(response.length > 0){
-                let dataTimestamp = new Date(response[0].timestamp);
+            if(response){
+                let dataTimestamp = new Date(response.timestamp);
 
                 // Calculate the difference in months
                 let monthDifference = (dataTimestamp.getFullYear() - currentDate.getFullYear()) * 12 + (dataTimestamp.getMonth() - currentDate.getMonth());
 
                 if(monthDifference < -2){
 
-                    tiktok_data(keyword, count, (result)=>{
-                        data.result = result;
-
-                        TiktokModel.findByIdAndDelete({ _id: response[0]._id})
-                        .then(()=>{
-                            TiktokModel(data).save()
+                    tiktok_data(keyword, count, (result, err)=>{
+                        if(!err){
+                            data.result = result;
+                            TiktokModel.findByIdAndDelete({ _id: response._id})
                             .then(()=>{
-                                res.status(200).json(data);
+                                TiktokModel(data).save()
+                                .then(()=>{
+                                    res.status(200).json(data);
+                                })
                             })
-                        })
+                        }else{
+                            res.status(500).json(result)
+                        }
                     }) 
                 }else{
                     res.status(200).json(response)
                 }
             }else{
-                tiktok_data(keyword, count, (result)=>{
-                    data.result = result;
-
-                    TiktokModel(data).save()
-                    .then(()=>{
-                        res.status(200).json(data);
-                    })
+                tiktok_data(keyword, count, (result, err)=>{
+                    if(!err){
+                        data.result = result;
+                        TiktokModel(data).save()
+                        .then(()=>{
+                            res.status(200).json(data);
+                        })
+                    }else{
+                        res.status(500).json(result)
+                    }
                 })
             }
         }
@@ -217,12 +226,12 @@ app.post("/twitter_social", urlEncoded, (req, res)=>{
     data.timestamp = currentDate;
 
     // Find if it has been queried recently
-    TwitterModel.find({ keyword : keyword})
+    TwitterModel.findOne({ keyword : keyword})
     .then(response =>{
     
         try{  
-            if(response.length > 0){
-                let dataTimestamp = new Date(response[0].timestamp);
+            if(response){
+                let dataTimestamp = new Date(response.timestamp);
 
                 // Calculate the difference in months
                 let monthDifference = (dataTimestamp.getFullYear() - currentDate.getFullYear()) * 12 + (dataTimestamp.getMonth() - currentDate.getMonth());
@@ -232,7 +241,7 @@ app.post("/twitter_social", urlEncoded, (req, res)=>{
                     twitter_data(keyword, count, (result)=>{
                         data.result = result;
 
-                        TwitterModel.findByIdAndDelete({ _id: response[0]._id})
+                        TwitterModel.findByIdAndDelete({ _id: response._id})
                         .then(()=>{
                             TwitterModel(data).save()
                             .then(()=>{
@@ -272,6 +281,7 @@ function instagram_data(keyword, count, callback){
         "query":`${keyword}`
     }))
     .end(response => {
+        console.log(response.error)
         //Instagram Hastags - response.body.response.body.hashtags
         //Instagram Users - response.body.response.body.users
         let raw_users = response.body.response.body.users.slice(0, count);
@@ -345,12 +355,12 @@ app.post("/instagram_social", urlEncoded, (req, res)=>{
     data.timestamp = currentDate;
 
     // Find if it has been queried recently
-    InstagramModel.find({ keyword : keyword})
+    InstagramModel.findOne({ keyword : keyword})
     .then(response =>{
     
         try{  
-            if(response.length > 0){
-                let dataTimestamp = new Date(response[0].timestamp);
+            if(response){
+                let dataTimestamp = new Date(response.timestamp);
 
                 // Calculate the difference in months
                 let monthDifference = (dataTimestamp.getFullYear() - currentDate.getFullYear()) * 12 + (dataTimestamp.getMonth() - currentDate.getMonth());
@@ -360,7 +370,7 @@ app.post("/instagram_social", urlEncoded, (req, res)=>{
                     instagram_data(keyword, count, (result)=>{
                         data.result = result;
 
-                        InstagramModel.findByIdAndDelete({ _id: response[0]._id})
+                        InstagramModel.findByIdAndDelete({ _id: response._id})
                         .then(()=>{
                             InstagramModel(data).save()
                             .then(()=>{
@@ -467,12 +477,12 @@ app.post("/linkedin_social", urlEncoded, (req, res)=>{
     data.timestamp = currentDate;
 
     // Find if it has been queried recently
-    LinkedinModel.find({ keyword : keyword})
+    LinkedinModel.findOne({ keyword : keyword})
     .then(response =>{
     
         try{  
-            if(response.length > 0){
-                let dataTimestamp = new Date(response[0].timestamp);
+            if(response){
+                let dataTimestamp = new Date(response.timestamp);
 
                 // Calculate the difference in months
                 let monthDifference = (dataTimestamp.getFullYear() - currentDate.getFullYear()) * 12 + (dataTimestamp.getMonth() - currentDate.getMonth());
@@ -482,7 +492,7 @@ app.post("/linkedin_social", urlEncoded, (req, res)=>{
                     linkedin_data(keyword, count, (result)=>{
                         data.result = result;
 
-                        LinkedinModel.findByIdAndDelete({ _id: response[0]._id})
+                        LinkedinModel.findByIdAndDelete({ _id: response._id})
                         .then(()=>{
                             LinkedinModel(data).save()
                             .then(()=>{
