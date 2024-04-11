@@ -425,63 +425,65 @@ function linkedin_data(keyword, count, callback){
     .query(`keyword=${keyword}`)
     .query(`count=${1}`)
     .end( response =>{
-        let data = { }
-        let posts = [];
-        let users = [];
-
-        if(response.body.dataCount > count){
-            let linkedInPosts = response.body.result.slice(0, count);
-
-            linkedInPosts.forEach( data => {
-                let user_obj = { };
-                
-                user_obj.username = data.nameSurname;
-                user_obj.profileTitle = data.profileTitle;
-                user_obj.profileUrl = data.profileURL;
+        if(!response.error){
+            let data = { }
+            let posts = [];
+            let users = [];
     
-                users.push(user_obj)
+            if(response.body.dataCount > count){
+                let linkedInPosts = response.body.result.slice(0, count);
     
-                let post_obj = { }
-                post_obj.postId = data.postID;
-                post_obj.postDescription = data.postDescription;
-                post_obj.reactionsCount = data.reactionCount;
-                post_obj.commentsCount = data.commentCount;
-                post_obj.postUrl = data.postUrl;
-    
-                posts.push(post_obj)
-            })
-    
-            data.users = users;
-            data.posts = posts.sort(comparePosts);
-    
-            callback(data);
+                linkedInPosts.forEach( data => {
+                    let user_obj = { };
+                    
+                    user_obj.username = data.nameSurname;
+                    user_obj.profileTitle = data.profileTitle;
+                    user_obj.profileUrl = data.profileURL;
+        
+                    users.push(user_obj)
+        
+                    let post_obj = { }
+                    post_obj.postId = data.postID;
+                    post_obj.postDescription = data.postDescription;
+                    post_obj.reactionsCount = data.reactionCount;
+                    post_obj.commentsCount = data.commentCount;
+                    post_obj.postUrl = data.postUrl;
+        
+                    posts.push(post_obj)
+                })
+        
+                data.users = users;
+                data.posts = posts.sort(comparePosts);
+        
+                callback(data);
+            }else{
+                response.body.result.forEach( data => {
+                    let user_obj = { };
+        
+                    user_obj.profileUrl = data.profileURL;
+                    user_obj.username = data.nameSurname;
+                    user_obj.profileTitle = data.profileTitle;
+        
+                    users.push(user_obj)
+        
+                    let post_obj = { }
+                    post_obj.postId = data.postID;
+                    post_obj.postDescription = data.postDescription;
+                    post_obj.reactionsCount = data.reactionCount;
+                    post_obj.commentsCount = data.commentCount;
+                    post_obj.postUrl = data.postUrl;
+        
+                    posts.push(post_obj)
+                })
+        
+                data.users = users;
+                data.posts = posts;
+        
+                callback(data, false);
+            }
         }else{
-            response.body.result.forEach( data => {
-                let user_obj = { };
-    
-                user_obj.profileUrl = data.profileURL;
-                user_obj.username = data.nameSurname;
-                user_obj.profileTitle = data.profileTitle;
-    
-                users.push(user_obj)
-    
-                let post_obj = { }
-                post_obj.postId = data.postID;
-                post_obj.postDescription = data.postDescription;
-                post_obj.reactionsCount = data.reactionCount;
-                post_obj.commentsCount = data.commentCount;
-                post_obj.postUrl = data.postUrl;
-    
-                posts.push(post_obj)
-            })
-    
-            data.users = users;
-            data.posts = posts;
-    
-            callback(data);
+            callback(`Failed to fetch: ${response.body.message}`, true)
         }
-
-       
     })
 }
 
@@ -506,35 +508,40 @@ app.post("/linkedin_social", urlEncoded, (req, res)=>{
 
                 if(monthDifference < -2){
 
-                    linkedin_data(keyword, count, (result)=>{
-                        data.result = result;
-
-                        LinkedinModel.findByIdAndDelete({ _id: response._id})
-                        .then(()=>{
-                            LinkedinModel(data).save()
+                    linkedin_data(keyword, count, (result, err)=>{
+                        if(!err){
+                            data.result = result;
+                            LinkedinModel.findByIdAndDelete({ _id: response._id})
                             .then(()=>{
-                                res.status(200).json(data);
+                                LinkedinModel(data).save()
+                                .then(()=>{
+                                    res.status(200).json(data);
+                                })
                             })
-                        })
+                        }else{
+                            res.status(500).json(result);
+                        }
                     }) 
                 }else{
-                    res.status(200).json(response)
+                    res.status(500).json(response);
                 }
             }else{
-                linkedin_data(keyword, count, (result)=>{
-                    data.result = result;
-
-                    LinkedinModel(data).save()
-                    .then(()=>{
-                        res.status(200).json(data);
-                    })
+                linkedin_data(keyword, count, (result, err)=>{
+                    if(!err){
+                        data.result = result;
+                        LinkedinModel(data).save()
+                        .then(()=>{
+                            res.status(200).json(data);
+                        })
+                    }else{
+                        res.status(500).json(result);
+                    }
                 })
             }
         }
         catch(err){
             res.status(500).json('Rate Limit exceeded');
         }
-
     })
 });
 
