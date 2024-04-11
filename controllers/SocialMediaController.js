@@ -291,68 +291,70 @@ function instagram_data(keyword, count, callback){
         "query":`${keyword}`
     }))
     .end(response => {
-        console.log(response.error)
-        //Instagram Hastags - response.body.response.body.hashtags
-        //Instagram Users - response.body.response.body.users
-        let raw_users = response.body.response.body.users.slice(0, count);
-        let users = [];
-        raw_users.forEach( user =>{
-            let obj = { };
-            obj.user_id = user.user.pk_id;
-            obj.fullname = user.user.full_name;
-            obj.username = user.user.username;
-            obj.profile_pic_url = user.user.profile_pic_url;
-            users.push(obj);
-        })
-        let hashtags = [];
-        response.body.response.body.hashtags.forEach(hashtag =>{
-            hashtags.push("#"+hashtag.hashtag.name);
-        })
-        const uniqueHashtags = [];
-        for (const item of hashtags) {
-            if (!uniqueHashtags.includes(item)) {
-                uniqueHashtags.push(item);
+        if(!response.error){
+            //Instagram Hastags - response.body.response.body.hashtags
+            //Instagram Users - response.body.response.body.users
+            let raw_users = response.body.response.body.users.slice(0, count);
+            let users = [];
+            raw_users.forEach( user =>{
+                let obj = { };
+                obj.user_id = user.user.pk_id;
+                obj.fullname = user.user.full_name;
+                obj.username = user.user.username;
+                obj.profile_pic_url = user.user.profile_pic_url;
+                users.push(obj);
+            })
+            let hashtags = [];
+            response.body.response.body.hashtags.forEach(hashtag =>{
+                hashtags.push("#"+hashtag.hashtag.name);
+            })
+            const uniqueHashtags = [];
+            for (const item of hashtags) {
+                if (!uniqueHashtags.includes(item)) {
+                    uniqueHashtags.push(item);
+                }
             }
-        }
-        let data = { };
-        let maxHashtags = uniqueHashtags.slice(0, count);
-        let completeHashtags = [];
-        let promises = [];
+            let data = { };
+            let maxHashtags = uniqueHashtags.slice(0, count);
+            let completeHashtags = [];
+            let promises = [];
 
-        maxHashtags.forEach((hashtag)=>{
-            let cleanHashtag = hashtag.substring(1);
-            let promise = new Promise((resolve, reject)=>{
-                unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/hashtag/get_info')
-                .headers({
-                    'content-type': 'application/json',
-                    'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
-                    'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
-                })
-                .send({
-                    name: cleanHashtag
-                })
-                .end( response => {
-                    let view_count = response.body.response.body.count;
-                    let newTag = { }
-                    newTag.hashtag = hashtag;
-                    newTag.view_count = view_count;
-                    completeHashtags.push(newTag); 
-                    resolve();
-                })
+            maxHashtags.forEach((hashtag)=>{
+                let cleanHashtag = hashtag.substring(1);
+                let promise = new Promise((resolve, reject)=>{
+                    unirest('POST', 'https://rocketapi-for-instagram.p.rapidapi.com/instagram/hashtag/get_info')
+                    .headers({
+                        'content-type': 'application/json',
+                        'X-RapidAPI-Key':  `${process.env.RAPID_API_KEY}`,
+                        'X-RapidAPI-Host': 'rocketapi-for-instagram.p.rapidapi.com'
+                    })
+                    .send({
+                        name: cleanHashtag
+                    })
+                    .end( response => {
+                        let view_count = response.body.response.body.count;
+                        let newTag = { }
+                        newTag.hashtag = hashtag;
+                        newTag.view_count = view_count;
+                        completeHashtags.push(newTag); 
+                        resolve();
+                    })
+                });
+                promises.push(promise);
+            })
+
+            Promise.all(promises)
+            .then(() => {
+                data.users = users;
+                data.hashtags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
+                callback(data, false); 
+            })
+            .catch((error) => {
+                console.error("Error fetching hashtag data:", error);
             });
-            promises.push(promise);
-        })
-
-        Promise.all(promises)
-        .then(() => {
-            data.users = users;
-            data.hashtags = completeHashtags.sort((a, b) => b.view_count - a.view_count);
-            callback(data); 
-        })
-        .catch((error) => {
-            console.error("Error fetching hashtag data:", error);
-        });
-            
+        }else{
+            callback(`Failed to fetch: ${response.body.message}`, true)
+        }
     })
 }
 
@@ -377,35 +379,40 @@ app.post("/instagram_social", urlEncoded, (req, res)=>{
 
                 if(monthDifference < -2){
 
-                    instagram_data(keyword, count, (result)=>{
-                        data.result = result;
-
-                        InstagramModel.findByIdAndDelete({ _id: response._id})
-                        .then(()=>{
-                            InstagramModel(data).save()
+                    instagram_data(keyword, count, (result, err)=>{
+                        if(!err){
+                            data.result = result;
+                            InstagramModel.findByIdAndDelete({ _id: response._id})
                             .then(()=>{
-                                res.status(200).json(data);
+                                InstagramModel(data).save()
+                                .then(()=>{
+                                    res.status(200).json(data);
+                                })
                             })
-                        })
+                        }else{
+                            res.status(500).json(result)
+                        }
                     }) 
                 }else{
                     res.status(200).json(response)
                 }
             }else{
-                instagram_data(keyword, count, (result)=>{
-                    data.result = result;
-
-                    InstagramModel(data).save()
-                    .then(()=>{
-                        res.status(200).json(data);
-                    })
+                instagram_data(keyword, count, (result, err)=>{
+                    if(!err){
+                        data.result = result;
+                        InstagramModel(data).save()
+                        .then(()=>{
+                            res.status(200).json(data);
+                        })
+                    }else{
+                        res.status(500).json(result)
+                    }
                 })
             }
         }
         catch(err){
             res.status(500).json('Rate Limit exceeded');
         }
-
     })
 });
 
