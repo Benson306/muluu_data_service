@@ -58,8 +58,28 @@ function getAPIToken(callback){
     })
 }
 
+function addHttpsToDomain(domain) {
+    if (domain.startsWith("https://")) {
+        return domain;
+    } else if (domain.startsWith("http://")) {
+        return "https://" + domain.substring(7);
+    } else {
+        return "https://" + domain;
+    }
+}
+
+function removeHttpFromDomain(domain) {
+    if (domain.startsWith("https://")) {
+        return domain.substring(8);
+    } else if (domain.startsWith("http://")) {
+        return domain.substring(7);
+    } else {
+        return domain;
+    }
+}
+
 app.post('/backlinks', urlEncoded, (req, res)=>{
-    let domain = req.body.domain;
+    let domain = addHttpsToDomain(req.body.domain);
     let results = { }
     BacklinksModel.findOne({ domain : domain})
     .then(async data =>{
@@ -133,7 +153,7 @@ app.post('/backlinks', urlEncoded, (req, res)=>{
 
 
 app.post('/website_traffic', urlEncoded, async (req, res)=>{
-    let domain  = req.body.domain;
+    let domain  = removeHttpFromDomain(req.body.domain);
     let language_code = "en";
 
     WebsiteTrafficModel.findOne({ domain : domain})
@@ -177,7 +197,7 @@ app.post('/website_traffic', urlEncoded, async (req, res)=>{
 })
 
 app.post('/page_seo', urlEncoded, (req, res)=>{
-    let domain  = req.body.domain;
+    let domain  = addHttpsToDomain(req.body.domain);
 
     PageSEOModel.findOne({ domain : domain})
     .then(async data =>{
@@ -216,7 +236,7 @@ app.post('/page_seo', urlEncoded, (req, res)=>{
 })
 
 app.post('/competitors_ranking', urlEncoded , (req, res)=>{
-    let domain = req.body.domain;
+    let domain = removeHttpFromDomain(req.body.domain);
 
     CompetitorRankingModel.findOne({ domain: domain})
     .then(async( data) =>{
@@ -258,7 +278,7 @@ app.post('/competitors_ranking', urlEncoded , (req, res)=>{
 })
 
 app.post('/keywords_ranking_in_domain', urlEncoded , (req, res)=>{
-    let domain = req.body.domain;
+    let domain = removeHttpFromDomain(req.body.domain);
 
     KeywordsRankingInDomainModel.findOne({ domain : domain})
     .then(async data =>{
