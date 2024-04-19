@@ -6,6 +6,7 @@ const KeywordsRankingInDomainModel = require('../models/KeywordRankingInDomainMo
 const BacklinksModel = require('../models/BacklinksModel');
 const WebsiteTrafficModel = require('../models/WebsiteTrafficModel');
 const PageSEOModel = require('../models/PageSEOModel');
+const CompetitorRankingModel = require('../models/CompetitorRanking');
 const urlEncoded = bodyParser.urlencoded({ extended: false });
 
 // app.post('/keywords_ranking_in_domain', urlEncoded, (req, res)=>{
@@ -214,36 +215,46 @@ app.post('/page_seo', urlEncoded, (req, res)=>{
     })
 })
 
-app.post('/competitors_ranking', urlEncoded ,async (req, res)=>{
+app.post('/competitors_ranking', urlEncoded , (req, res)=>{
     let domain = req.body.domain;
-    const token = await new Promise((resolve, reject) => {
-        getAPIToken((key) => {
-            const newToken = JSON.parse(key);
-            resolve(newToken.token);
-        });
-    });
 
-    let request = unirest("POST", `https://app.boostramp.com/api/tools.php?token=${token}&func=getCompetitorsRanking`)
-    request.field("country", 2404)
-    request.field("domain", domain)
-    request.end(function (response){
-        if (response.error || response.body.error) {
-            res.status(500).json(`Failed to fetch ${response.error || response.body.error}`)
-        }else{              
-            const completeResult = {};
-            completeResult.domain = domain;
-            completeResult.result = JSON.parse(response.body);
-
-            PageSEOModel(completeResult).save()
-            .then(newData => {
-                res.json(newData);
-            })
-            .catch(err => {
-                res.status(400).json('failed');
-            })
+    CompetitorRankingModel.findOne({ domain: domain})
+    .then(async( data) =>{
+        if(data){
+            res.json(data);
+        }else{
+            const token = await new Promise((resolve, reject) => {
+                getAPIToken((key) => {
+                    const newToken = JSON.parse(key);
+                    resolve(newToken.token);
+                });
+            });
+        
+            let request = unirest("POST", `https://app.boostramp.com/api/tools.php?token=${token}&func=getCompetitorsRanking`)
+            request.field("country", 2404)
+            request.field("domain", domain)
+            request.end(function (response){
+                if (response.error || response.body.error) {
+                    res.status(500).json(`Failed to fetch ${response.error || response.body.error}`)
+                }else{              
+                    const completeResult = {};
+                    completeResult.domain = domain;
+                    completeResult.result = JSON.parse(response.body);
+        
+                    CompetitorRankingModel(completeResult).save()
+                    .then(newData => {
+                        res.json(newData);
+                    })
+                    .catch(err => {
+                        res.status(400).json('failed');
+                    })
+                }
+                    
+            });
         }
-            
     })
+    
+    
 })
 
 app.post('/keywords_ranking_in_domain', urlEncoded , (req, res)=>{
