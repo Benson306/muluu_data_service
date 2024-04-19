@@ -281,7 +281,6 @@ app.post('/keywords_ranking_in_domain', urlEncoded , (req, res)=>{
                 }else{               
                     const completeResult = {};
                     completeResult.domain = domain;
-                    console.log(response.body);
                     completeResult.result = JSON.parse(response.body);
 
                     KeywordsRankingInDomainModel(completeResult).save()
